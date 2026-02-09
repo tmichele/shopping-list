@@ -1,1387 +1,1259 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista Spesa Collaborativa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2E7D32">
+    <title>Lista Spesa</title>
+    <link rel="manifest" href="manifest.json">
     <style>
+        :root {
+            --g: #2E7D32;
+            --gl: #4CAF50;
+            --gb: #E8F5E9;
+            --o: #FF6F00;
+            --ob: #FFF3E0;
+            --b: #1565C0;
+            --bb: #E3F2FD;
+            --r: #C62828;
+            --gr: #757575;
+            --grl: #E0E0E0;
+            --grb: #F5F5F5;
+            --w: #FFF;
+            --sh: 0 2px 8px rgba(0, 0, 0, .1);
+            --rad: 12px;
+            --th: 60px;
+            --hh: 56px;
+            --sb: env(safe-area-inset-bottom, 0px)
+        }
+
         * {
             margin: 0;
-            padding: 0; 
+            padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--grb);
+            color: #212121;
+            overflow-x: hidden;
+            padding-bottom: calc(var(--th)+var(--sb)+8px)
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-        
+
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .share-section {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        
-        .share-link {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .share-link input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .share-link button {
-            padding: 10px 20px;
-            background: white;
-            color: #667eea;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .tabs {
-            display: flex;
-            background: #f5f5f5;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            background: #f5f5f5;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
-        }
-        
-        .tab.active {
-            background: white;
-            color: #667eea;
-            border-bottom: 3px solid #667eea;
-        }
-        
-        .tab-content {
-            display: none;
-            padding: 20px;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .add-item {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .add-item input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-        
-        .add-item button, .btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-        
-        .add-item button:hover, .btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .shopping-list {
-            list-style: none;
-        }
-        
-        .shopping-item {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--g);
+            color: #fff;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
-            padding: 15px;
-            background: #f9f9f9;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            transition: all 0.3s;
+            justify-content: space-between;
+            box-shadow: var(--sh);
+            min-height: var(--hh)
         }
-        
-        .shopping-item:hover {
-            background: #f0f0f0;
-            transform: translateX(5px);
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 700
         }
-        
-        .shopping-item.completed {
-            opacity: 0.6;
-            text-decoration: line-through;
-        }
-        
-        .shopping-item input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-            margin-right: 15px;
-            cursor: pointer;
-        }
-        
-        .item-info {
-            flex: 1;
-        }
-        
-        .item-name {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .item-details {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .item-actions {
+
+        .header-actions {
             display: flex;
-            gap: 10px;
+            gap: 6px;
+            align-items: center
         }
-        
-        .item-actions button {
-            padding: 8px 16px;
+
+        .hbtn {
+            background: rgba(255, 255, 255, .2);
             border: none;
-            border-radius: 5px;
+            color: #fff;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 17px;
             cursor: pointer;
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center
         }
-        
-        .edit-btn {
-            background: #4CAF50;
-            color: white;
+
+        .hbtn:active {
+            background: rgba(255, 255, 255, .35)
         }
-        
-        .delete-btn {
-            background: #f44336;
-            color: white;
+
+        .obadge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px
         }
-        
-        .catalog-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+
+        .obadge.on {
+            background: var(--gb);
+            color: var(--g)
         }
-        
-        .catalog-item {
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
+
+        .obadge.off {
+            background: var(--ob);
+            color: var(--o)
         }
-        
-        .catalog-item:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .catalog-item.selected {
-            border-color: #667eea;
-            background: #e8eaf6;
-        }
-        
-        .modal {
-            display: none;
+
+        .tab-bar {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            animation: fadeIn 0.3s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal-content {
-            position: relative;
-            background: white;
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .modal-content h2 {
-            margin-bottom: 20px;
-            color: #667eea;
-        }
-        
-        .modal-content input, .modal-content select, .modal-content textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        
-        .modal-content textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .modal-actions {
+            right: 0;
+            z-index: 100;
+            background: var(--w);
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, .1);
+            padding-bottom: var(--sb)
         }
-        
-        .modal-actions button {
+
+        .tab {
             flex: 1;
-            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            cursor: pointer;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
+            background: none;
+            color: var(--gr);
+            font-size: 11px;
             font-weight: 600;
+            position: relative
         }
-        
-        .save-btn {
-            background: #4CAF50;
-            color: white;
+
+        .tab.active {
+            color: var(--g)
         }
-        
-        .cancel-btn {
-            background: #f44336;
-            color: white;
+
+        .tab-icon {
+            font-size: 22px;
+            margin-bottom: 2px
         }
-        
-        .close-modal {
+
+        .tbadge {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #999;
-        }
-        
-        .close-modal:hover {
-            color: #333;
-        }
-        
-        .auth-modal {
+            top: 2px;
+            right: calc(50% - 22px);
+            background: var(--o);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0 4px
         }
-        
-        .auth-modal .modal-content {
-            margin: 0;
+
+        .tbadge:empty {
+            display: none
         }
-        
-        .pantry-item {
+
+        .page {
+            display: none;
+            padding: 8px
+        }
+
+        .page.active {
+            display: block
+        }
+
+        .sbox-wrap {
+            position: sticky;
+            top: var(--hh);
+            z-index: 50;
+            background: var(--grb);
+            padding: 8px 8px 4px;
+            margin: -8px -8px 0
+        }
+
+        .sbox {
             display: flex;
             align-items: center;
-            padding: 15px;
-            background: #f9f9f9;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            gap: 15px;
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 0 12px;
+            box-shadow: var(--sh)
         }
-        
-        .pantry-item.low-stock {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-        
-        .pantry-info {
+
+        .sbox input {
             flex: 1;
-        }
-        
-        .pantry-name {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-        
-        .pantry-details {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .pantry-quantity {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .pantry-quantity button {
-            width: 32px;
-            height: 32px;
             border: none;
-            border-radius: 5px;
-            background: #667eea;
-            color: white;
+            outline: none;
+            padding: 11px 8px;
+            font-size: 15px;
+            background: transparent
+        }
+
+        .sclr {
+            background: none;
+            border: none;
             font-size: 18px;
+            color: var(--gr);
             cursor: pointer;
-            transition: all 0.2s;
+            padding: 4px;
+            display: none
         }
-        
-        .pantry-quantity button:hover {
-            background: #5568d3;
-            transform: scale(1.1);
+
+        .sclr.v {
+            display: block
         }
-        
-        .pantry-quantity span {
-            font-size: 18px;
-            font-weight: 600;
-            min-width: 40px;
-            text-align: center;
+
+        .chips {
+            position: sticky;
+            top: calc(var(--hh)+48px);
+            z-index: 49;
+            background: var(--grb);
+            margin: 0 -8px;
+            padding: 6px 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none
         }
-        
-        .low-stock-badge {
-            background: #ffc107;
-            color: #000;
-            padding: 4px 8px;
-            border-radius: 5px;
+
+        .chips::-webkit-scrollbar {
+            display: none
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 7px 12px;
+            margin-right: 5px;
+            border-radius: 18px;
             font-size: 12px;
             font-weight: 600;
+            background: var(--w);
+            color: #555;
+            border: 2px solid var(--grl);
+            cursor: pointer;
+            user-select: none
         }
-        
-        .filters {
+
+        .chip.active {
+            background: var(--g);
+            color: #fff;
+            border-color: var(--g)
+        }
+
+        .cnt {
+            font-size: 11px;
+            color: var(--gr);
+            padding: 4px;
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center
         }
-        
-        .filters select, .filters input {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+
+        .abtn {
+            background: var(--g);
+            color: #fff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .pc {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 10px 12px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+            border-left: 4px solid transparent
+        }
+
+        .pc.sel {
+            border-left-color: var(--g);
+            background: var(--gb)
+        }
+
+        .pc .inf {
+            flex: 1;
+            min-width: 0
+        }
+
+        .pn {
             font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 1px
         }
-        
-        @media (max-width: 600px) {
-            .catalog-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+
+        .pm {
+            font-size: 11px;
+            color: var(--gr);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .ab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bb);
+            color: var(--b);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 6px;
+            min-width: 24px
+        }
+
+        .ab.bf {
+            background: #F3E5F5;
+            color: #7B1FA2
+        }
+
+        .ab.bp {
+            background: #E0F7FA;
+            color: #00838F
+        }
+
+        .ab.em {
+            background: var(--grl);
+            color: var(--gr)
+        }
+
+        .pt {
+            color: var(--g);
+            font-weight: 600
+        }
+
+        .pno {
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+            margin-top: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px
+        }
+
+        .eb {
+            background: none;
+            border: none;
+            font-size: 16px;
+            padding: 4px;
+            cursor: pointer;
+            opacity: .3
+        }
+
+        .eb:active {
+            opacity: 1
+        }
+
+        .qc {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0
+        }
+
+        .qb {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--g);
+            background: #fff;
+            color: var(--g);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .qb:active {
+            transform: scale(.9)
+        }
+
+        .qb.a {
+            background: var(--g);
+            color: #fff
+        }
+
+        .qb.r {
+            border-color: var(--r);
+            color: var(--r)
+        }
+
+        .qv {
+            width: 28px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--g)
+        }
+
+        .ls {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: var(--sh);
+            text-align: center
+        }
+
+        .lsr {
+            display: flex;
+            justify-content: space-around
+        }
+
+        .sv {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--g)
+        }
+
+        .sl {
+            font-size: 10px;
+            color: var(--gr);
+            font-weight: 600;
+            text-transform: uppercase
+        }
+
+        .as {
+            margin-bottom: 10px
+        }
+
+        .ah {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 4px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--b);
+            position: sticky;
+            top: var(--hh);
+            background: var(--grb);
+            z-index: 10
+        }
+
+        .ahb {
+            background: var(--b);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px
+        }
+
+        .ahb.bf {
+            background: #7B1FA2
+        }
+
+        .ahb.bp {
+            background: #00838F
+        }
+
+        .ahb.na {
+            background: var(--gr)
+        }
+
+        .li {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 12px 10px;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+            transition: all .3s
+        }
+
+        .li.dn {
+            opacity: 0;
+            transform: translateX(80px);
+            max-height: 0;
+            padding: 0 10px;
+            margin: 0
+        }
+
+        .ck {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 3px solid var(--g);
+            background: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: transparent
+        }
+
+        .ck:active {
+            background: var(--g);
+            color: #fff
+        }
+
+        .lin {
+            flex: 1
+        }
+
+        .lnm {
+            font-size: 14px;
+            font-weight: 600
+        }
+
+        .ld {
+            font-size: 11px;
+            color: var(--gr)
+        }
+
+        .lq {
+            background: var(--ob);
+            color: var(--o);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .es {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gr)
+        }
+
+        .ei {
+            font-size: 56px;
+            margin-bottom: 12px
+        }
+
+        .et {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #444
+        }
+
+        .rb {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 14px;
+            background: #fff;
+            color: var(--r);
+            border: 2px solid var(--r);
+            border-radius: var(--rad);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .rb:active {
+            background: var(--r);
+            color: #fff
+        }
+
+        .mo {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, .5);
+            align-items: flex-end;
+            justify-content: center
+        }
+
+        .mo.active {
+            display: flex
+        }
+
+        .md {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px calc(20px+var(--sb));
+            animation: su .3s;
+            max-height: 90vh;
+            overflow-y: auto
+        }
+
+        @keyframes su {
+            from {
+                transform: translateY(100%)
             }
-            
-            .tabs {
-                font-size: 14px;
+
+            to {
+                transform: translateY(0)
             }
-            
-            .tab {
-                padding: 12px 8px;
-            }
-            
-            .pantry-quantity {
-                flex-direction: column;
-                gap: 5px;
-            }
+        }
+
+        .md h2 {
+            font-size: 17px;
+            margin-bottom: 14px;
+            text-align: center
+        }
+
+        .ml {
+            background: var(--grb);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            word-break: break-all;
+            margin-bottom: 14px;
+            text-align: center;
+            color: var(--b)
+        }
+
+        .mb {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            background: var(--g);
+            color: #fff;
+            border: none;
+            border-radius: var(--rad);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 8px
+        }
+
+        .mb.s {
+            background: var(--grl);
+            color: #444
+        }
+
+        .mb.d {
+            background: var(--r)
+        }
+
+        .mb:active {
+            opacity: .8
+        }
+
+        .fg {
+            margin-bottom: 12px
+        }
+
+        .fg label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gr);
+            margin-bottom: 4px
+        }
+
+        .fg input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--grl);
+            border-radius: 8px;
+            font-size: 15px
+        }
+
+        .fg input:focus {
+            border-color: var(--g);
+            outline: none
+        }
+
+        .fr {
+            display: flex;
+            gap: 8px
+        }
+
+        .fr .fg {
+            flex: 1
+        }
+
+        .au {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: linear-gradient(135deg, #1B5E20, #2E7D32, #43A047);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .ac {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px 24px;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
+            text-align: center
+        }
+
+        .ac h1 {
+            font-size: 48px;
+            margin-bottom: 8px
+        }
+
+        .ac h2 {
+            font-size: 20px;
+            color: var(--g);
+            margin-bottom: 4px
+        }
+
+        .ac p {
+            font-size: 13px;
+            color: var(--gr);
+            margin-bottom: 20px
+        }
+
+        .ac input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--grl);
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 12px
+        }
+
+        .ac input:focus {
+            border-color: var(--g);
+            outline: none
+        }
+
+        .ac input[type=password] {
+            letter-spacing: 4px
+        }
+
+        .ae {
+            color: var(--r);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            min-height: 20px
+        }
+
+        .at {
+            color: var(--b);
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 12px;
+            text-decoration: underline
+        }
+
+        .ss {
+            padding: 20px 16px;
+            max-width: 500px;
+            margin: 0 auto
+        }
+
+        .ss h2 {
+            color: var(--g);
+            margin-bottom: 14px;
+            font-size: 20px
+        }
+
+        .ss p {
+            margin-bottom: 10px;
+            font-size: 13px
+        }
+
+        .si {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border: 2px solid var(--grl);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: monospace
+        }
+
+        .si:focus {
+            border-color: var(--g);
+            outline: none
+        }
+
+        .sb {
+            width: 100%;
+            padding: 13px;
+            margin-top: 10px;
+            background: var(--g);
+            color: #fff;
+            border: none;
+            border-radius: var(--rad);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .sb.sk {
+            background: var(--grl);
+            color: #444;
+            margin-top: 6px
+        }
+
+        .sn {
+            background: var(--ob);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 14px 0;
+            font-size: 12px
+        }
+
+        .stcard {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--sh)
+        }
+
+        .stcard h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gr);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .st-big {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-bottom: 4px
+        }
+
+        .st-big .sv {
+            font-size: 32px
+        }
+
+        .st-big .sl {
+            font-size: 10px;
+            color: var(--gr);
+            font-weight: 600;
+            text-transform: uppercase
+        }
+
+        .st-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px
+        }
+
+        .st-bar-label {
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 90px;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .st-bar-track {
+            flex: 1;
+            height: 20px;
+            background: var(--grl);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative
+        }
+
+        .st-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width .5s;
+            min-width: 2px
+        }
+
+        .st-bar-val {
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 50px;
+            text-align: left;
+            color: var(--gr)
+        }
+
+        .st-rank {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--grl)
+        }
+
+        .st-rank:last-child {
+            border: none
+        }
+
+        .st-rank-num {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--g);
+            min-width: 28px;
+            text-align: center
+        }
+
+        .st-rank-num.gold {
+            color: #F9A825
+        }
+
+        .st-rank-num.silver {
+            color: #90A4AE
+        }
+
+        .st-rank-num.bronze {
+            color: #8D6E63
+        }
+
+        .st-rank-info {
+            flex: 1
+        }
+
+        .st-rank-name {
+            font-size: 13px;
+            font-weight: 600
+        }
+
+        .st-rank-detail {
+            font-size: 11px;
+            color: var(--gr)
+        }
+
+        .st-rank-badge {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--g);
+            background: var(--gb);
+            padding: 3px 10px;
+            border-radius: 10px
+        }
+
+        .st-trip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--grl)
+        }
+
+        .st-trip:last-child {
+            border: none
+        }
+
+        .st-trip-date {
+            min-width: 70px
+        }
+
+        .st-trip-day {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333
+        }
+
+        .st-trip-time {
+            font-size: 10px;
+            color: var(--gr)
+        }
+
+        .st-trip-info {
+            flex: 1
+        }
+
+        .st-trip-items {
+            font-size: 12px;
+            color: var(--gr)
+        }
+
+        .st-trip-total {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--g)
+        }
+
+        .st-empty {
+            text-align: center;
+            padding: 30px;
+            color: var(--gr);
+            font-size: 13px
+        }
+
+        .clr-hist-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background: #fff;
+            color: var(--gr);
+            border: 1px solid var(--grl);
+            border-radius: var(--rad);
+            font-size: 12px;
+            cursor: pointer
+        }
+
+        .toast {
+            position: fixed;
+            bottom: calc(var(--th)+var(--sb)+16px);
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 22px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 300;
+            transition: transform .3s;
+            white-space: nowrap
+        }
+
+        .toast.v {
+            transform: translateX(-50%) translateY(0)
+        }
+
+        ::-webkit-scrollbar {
+            width: 0
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🛒 Lista Spesa Collaborativa</h1>
-            <p id="status">Offline - Solo locale</p>
-            <div class="share-section" id="shareSection" style="display: none;">
-                <p>Condividi questa lista:</p>
-                <div class="share-link">
-                    <input type="text" id="shareLink" readonly>
-                    <button onclick="copyShareLink()">📋 Copia</button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('shopping')">🛒 Lista Spesa</button>
-            <button class="tab" onclick="switchTab('pantry')">📦 Dispensa</button>
-            <button class="tab" onclick="switchTab('catalog')">📚 Catalogo</button>
-        </div>
-        
-        <!-- Tab Lista Spesa -->
-        <div id="shopping-tab" class="tab-content active">
-            <div class="add-item">
-                <input type="text" id="quickAddInput" placeholder="Aggiungi prodotto veloce...">
-                <button onclick="quickAddItem()">+ Aggiungi</button>
-            </div>
-            <ul class="shopping-list" id="shoppingList"></ul>
-        </div>
-        
-        <!-- Tab Dispensa -->
-        <div id="pantry-tab" class="tab-content">
-            <div class="filters">
-                <input type="text" id="pantrySearch" placeholder="Cerca in dispensa..." oninput="filterPantry()">
-                <select id="pantryFilter" onchange="filterPantry()">
-                    <option value="all">Tutti i prodotti</option>
-                    <option value="low">Solo scorte basse</option>
-                </select>
-                <button class="btn" onclick="openInventoryModal()">📋 Inventario Completo</button>
-            </div>
-            <div id="pantryList"></div>
-        </div>
-        
-        <!-- Tab Catalogo -->
-        <div id="catalog-tab" class="tab-content">
-            <div class="filters">
-                <input type="text" id="catalogSearch" placeholder="Cerca prodotto..." oninput="filterCatalog()">
-                <select id="categoryFilter" onchange="filterCatalog()">
-                    <option value="">Tutte le categorie</option>
-                </select>
-                <select id="aisleFilter" onchange="filterCatalog()">
-                    <option value="">Tutti i corridoi</option>
-                </select>
-            </div>
-            <button class="btn" onclick="openProductModal()">+ Nuovo Prodotto</button>
-            <button class="btn" onclick="addSelectedToShopping()">➕ Aggiungi Selezionati alla Spesa</button>
-            <div class="catalog-grid" id="catalogGrid"></div>
-        </div>
-    </div>
-    
-    <!-- Modal Autenticazione -->
-    <div id="authModal" class="modal auth-modal">
-        <div class="modal-content">
-            <h2>🔐 Autenticazione</h2>
-            <p id="authMessage">Inserisci il PIN per accedere a questa lista:</p>
-            <input type="password" id="authPin" placeholder="PIN (minimo 4 caratteri)">
-            <div class="modal-actions">
-                <button class="save-btn" onclick="authenticate()">Accedi</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Prodotto -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeProductModal()">&times;</span>
-            <h2 id="modalTitle">Nuovo Prodotto</h2>
-            <input type="text" id="productName" placeholder="Nome prodotto *">
-            <input type="text" id="productAisle" placeholder="Corridoio (es. 1, 2A, Frigo)">
-            <input type="text" id="productCategory" placeholder="Categoria">
-            <input type="number" id="productPrice" placeholder="Prezzo (€)" step="0.01">
-            <input type="number" id="productThreshold" placeholder="Soglia riordino (opzionale)" min="0">
-            <small style="color: #666; display: block; margin: -10px 0 15px 0;">
-                Quando la quantità in dispensa scende sotto questa soglia, il prodotto viene aggiunto automaticamente alla lista spesa
-            </small>
-            <textarea id="productNotes" placeholder="Note"></textarea>
-            <div class="modal-actions">
-                <button class="save-btn" onclick="saveProduct()">Salva</button>
-                <button class="cancel-btn" onclick="closeProductModal()">Annulla</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal Inventario -->
-    <div id="inventoryModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <span class="close-modal" onclick="closeInventoryModal()">&times;</span>
-            <h2>📋 Inventario Dispensa</h2>
-            <p style="margin-bottom: 15px; color: #666;">Imposta manualmente la quantità di ciascun prodotto in dispensa</p>
-            <div id="inventoryList"></div>
-            <div class="modal-actions">
-                <button class="save-btn" onclick="closeInventoryModal()">Chiudi</button>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    
-    <script>
-        // Configurazione Firebase
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        
-        let app, db, auth;
-        let listId = null;
-        let isOnline = false;
-        let selectedProducts = new Set();
-        let currentEditingProduct = null;
-        
-        // Catalogo prodotti predefinito (279 prodotti)
-        const defaultCatalog = [
-            // Frutta e Verdura
-            {name:"Mele",aisle:"Frutta",category:"Frutta",price:2.5},
-            {name:"Banane",aisle:"Frutta",category:"Frutta",price:1.8},
-            {name:"Arance",aisle:"Frutta",category:"Frutta",price:2.2},
-            {name:"Pere",aisle:"Frutta",category:"Frutta",price:2.8},
-            {name:"Kiwi",aisle:"Frutta",category:"Frutta",price:3.5},
-            {name:"Fragole",aisle:"Frutta",category:"Frutta",price:3.9},
-            {name:"Uva",aisle:"Frutta",category:"Frutta",price:4.2},
-            {name:"Melone",aisle:"Frutta",category:"Frutta",price:3.0},
-            {name:"Anguria",aisle:"Frutta",category:"Frutta",price:2.5},
-            {name:"Ananas",aisle:"Frutta",category:"Frutta",price:3.8},
-            {name:"Pomodori",aisle:"Verdura",category:"Verdura",price:2.9},
-            {name:"Lattuga",aisle:"Verdura",category:"Verdura",price:1.5},
-            {name:"Carote",aisle:"Verdura",category:"Verdura",price:1.8},
-            {name:"Zucchine",aisle:"Verdura",category:"Verdura",price:2.3},
-            {name:"Melanzane",aisle:"Verdura",category:"Verdura",price:2.6},
-            {name:"Peperoni",aisle:"Verdura",category:"Verdura",price:3.2},
-            {name:"Cetrioli",aisle:"Verdura",category:"Verdura",price:1.9},
-            {name:"Cipolla",aisle:"Verdura",category:"Verdura",price:1.2},
-            {name:"Aglio",aisle:"Verdura",category:"Verdura",price:2.5},
-            {name:"Patate",aisle:"Verdura",category:"Verdura",price:1.5},
-            {name:"Spinaci",aisle:"Verdura",category:"Verdura",price:2.8},
-            {name:"Broccoli",aisle:"Verdura",category:"Verdura",price:2.9},
-            {name:"Cavolfiore",aisle:"Verdura",category:"Verdura",price:2.7},
-            {name:"Funghi",aisle:"Verdura",category:"Verdura",price:3.5},
-            {name:"Insalata Mista",aisle:"Verdura",category:"Verdura",price:2.2},
-            
-            // Latticini
-            {name:"Latte Intero",aisle:"Frigo",category:"Latticini",price:1.2},
-            {name:"Latte Parzialmente Scremato",aisle:"Frigo",category:"Latticini",price:1.2},
-            {name:"Latte Scremato",aisle:"Frigo",category:"Latticini",price:1.2},
-            {name:"Yogurt Bianco",aisle:"Frigo",category:"Latticini",price:0.8},
-            {name:"Yogurt alla Frutta",aisle:"Frigo",category:"Latticini",price:1.2},
-            {name:"Yogurt Greco",aisle:"Frigo",category:"Latticini",price:1.8},
-            {name:"Burro",aisle:"Frigo",category:"Latticini",price:2.5},
-            {name:"Margarina",aisle:"Frigo",category:"Latticini",price:1.8},
-            {name:"Panna Fresca",aisle:"Frigo",category:"Latticini",price:1.5},
-            {name:"Panna da Cucina",aisle:"Frigo",category:"Latticini",price:1.2},
-            {name:"Mozzarella",aisle:"Frigo",category:"Formaggi",price:2.8},
-            {name:"Parmigiano",aisle:"Frigo",category:"Formaggi",price:12.5},
-            {name:"Grana Padano",aisle:"Frigo",category:"Formaggi",price:10.5},
-            {name:"Gorgonzola",aisle:"Frigo",category:"Formaggi",price:8.5},
-            {name:"Ricotta",aisle:"Frigo",category:"Formaggi",price:2.2},
-            {name:"Stracchino",aisle:"Frigo",category:"Formaggi",price:2.5},
-            {name:"Fontina",aisle:"Frigo",category:"Formaggi",price:9.5},
-            {name:"Scamorza",aisle:"Frigo",category:"Formaggi",price:6.5},
-            {name:"Pecorino",aisle:"Frigo",category:"Formaggi",price:11.5},
-            {name:"Formaggio Spalmabile",aisle:"Frigo",category:"Formaggi",price:2.8},
-            
-            // Carne e Pesce
-            {name:"Petto di Pollo",aisle:"Macelleria",category:"Carne",price:7.5},
-            {name:"Cosce di Pollo",aisle:"Macelleria",category:"Carne",price:5.5},
-            {name:"Fettine di Vitello",aisle:"Macelleria",category:"Carne",price:12.5},
-            {name:"Bistecca",aisle:"Macelleria",category:"Carne",price:15.0},
-            {name:"Macinato di Manzo",aisle:"Macelleria",category:"Carne",price:8.5},
-            {name:"Salsiccia",aisle:"Macelleria",category:"Carne",price:6.5},
-            {name:"Prosciutto Cotto",aisle:"Salumeria",category:"Salumi",price:8.5},
-            {name:"Prosciutto Crudo",aisle:"Salumeria",category:"Salumi",price:12.5},
-            {name:"Salame",aisle:"Salumeria",category:"Salumi",price:9.5},
-            {name:"Mortadella",aisle:"Salumeria",category:"Salumi",price:7.5},
-            {name:"Speck",aisle:"Salumeria",category:"Salumi",price:11.5},
-            {name:"Bresaola",aisle:"Salumeria",category:"Salumi",price:14.5},
-            {name:"Salmone Fresco",aisle:"Pescheria",category:"Pesce",price:18.5},
-            {name:"Tonno Fresco",aisle:"Pescheria",category:"Pesce",price:16.5},
-            {name:"Branzino",aisle:"Pescheria",category:"Pesce",price:14.5},
-            {name:"Orata",aisle:"Pescheria",category:"Pesce",price:13.5},
-            {name:"Gamberetti",aisle:"Pescheria",category:"Pesce",price:15.5},
-            {name:"Calamari",aisle:"Pescheria",category:"Pesce",price:12.5},
-            {name:"Cozze",aisle:"Pescheria",category:"Pesce",price:8.5},
-            {name:"Vongole",aisle:"Pescheria",category:"Pesce",price:9.5},
-            
-            // Pasta e Riso
-            {name:"Pasta Spaghetti",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Penne",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Fusilli",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Rigatoni",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Farfalle",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Linguine",aisle:"1",category:"Pasta",price:1.2},
-            {name:"Pasta Integrale",aisle:"1",category:"Pasta",price:1.8},
-            {name:"Pasta all'Uovo",aisle:"1",category:"Pasta",price:2.5},
-            {name:"Lasagne",aisle:"1",category:"Pasta",price:1.8},
-            {name:"Tortellini Freschi",aisle:"Frigo",category:"Pasta",price:3.5},
-            {name:"Ravioli Freschi",aisle:"Frigo",category:"Pasta",price:3.5},
-            {name:"Gnocchi",aisle:"Frigo",category:"Pasta",price:2.8},
-            {name:"Riso Carnaroli",aisle:"1",category:"Riso",price:2.5},
-            {name:"Riso Arborio",aisle:"1",category:"Riso",price:2.5},
-            {name:"Riso Basmati",aisle:"1",category:"Riso",price:3.5},
-            {name:"Riso Integrale",aisle:"1",category:"Riso",price:2.8},
-            {name:"Riso Venere",aisle:"1",category:"Riso",price:4.5},
-            
-            // Pane e Prodotti da Forno
-            {name:"Pane",aisle:"Panetteria",category:"Pane",price:2.5},
-            {name:"Pane Integrale",aisle:"Panetteria",category:"Pane",price:3.0},
-            {name:"Pane ai Cereali",aisle:"Panetteria",category:"Pane",price:3.2},
-            {name:"Grissini",aisle:"2",category:"Pane",price:1.8},
-            {name:"Crackers",aisle:"2",category:"Pane",price:2.2},
-            {name:"Fette Biscottate",aisle:"2",category:"Pane",price:2.5},
-            {name:"Biscotti Secchi",aisle:"2",category:"Biscotti",price:2.8},
-            {name:"Biscotti al Cioccolato",aisle:"2",category:"Biscotti",price:3.2},
-            {name:"Merendine",aisle:"2",category:"Dolci",price:3.5},
-            {name:"Cornetti",aisle:"2",category:"Dolci",price:3.8},
-            
-            // Condimenti e Spezie
-            {name:"Olio EVO",aisle:"3",category:"Condimenti",price:6.5},
-            {name:"Olio di Semi",aisle:"3",category:"Condimenti",price:3.5},
-            {name:"Aceto di Vino",aisle:"3",category:"Condimenti",price:1.8},
-            {name:"Aceto Balsamico",aisle:"3",category:"Condimenti",price:4.5},
-            {name:"Sale Fino",aisle:"3",category:"Condimenti",price:0.5},
-            {name:"Sale Grosso",aisle:"3",category:"Condimenti",price:0.5},
-            {name:"Pepe Nero",aisle:"3",category:"Spezie",price:2.5},
-            {name:"Peperoncino",aisle:"3",category:"Spezie",price:1.8},
-            {name:"Origano",aisle:"3",category:"Spezie",price:1.5},
-            {name:"Basilico Secco",aisle:"3",category:"Spezie",price:1.8},
-            {name:"Rosmarino",aisle:"3",category:"Spezie",price:1.5},
-            {name:"Salvia",aisle:"3",category:"Spezie",price:1.5},
-            {name:"Curry",aisle:"3",category:"Spezie",price:2.8},
-            {name:"Paprika",aisle:"3",category:"Spezie",price:2.5},
-            {name:"Curcuma",aisle:"3",category:"Spezie",price:3.5},
-            {name:"Zenzero",aisle:"3",category:"Spezie",price:2.8},
-            {name:"Cannella",aisle:"3",category:"Spezie",price:2.5},
-            {name:"Noce Moscata",aisle:"3",category:"Spezie",price:3.2},
-            
-            // Conserve e Scatolame
-            {name:"Pomodori Pelati",aisle:"4",category:"Conserve",price:1.5},
-            {name:"Passata di Pomodoro",aisle:"4",category:"Conserve",price:1.2},
-            {name:"Concentrato di Pomodoro",aisle:"4",category:"Conserve",price:0.8},
-            {name:"Tonno in Scatola",aisle:"4",category:"Conserve",price:3.5},
-            {name:"Ceci in Scatola",aisle:"4",category:"Conserve",price:1.2},
-            {name:"Fagioli in Scatola",aisle:"4",category:"Conserve",price:1.2},
-            {name:"Lenticchie in Scatola",aisle:"4",category:"Conserve",price:1.2},
-            {name:"Mais in Scatola",aisle:"4",category:"Conserve",price:1.0},
-            {name:"Olive Verdi",aisle:"4",category:"Conserve",price:2.5},
-            {name:"Olive Nere",aisle:"4",category:"Conserve",price:2.5},
-            {name:"Capperi",aisle:"4",category:"Conserve",price:2.8},
-            {name:"Acciughe",aisle:"4",category:"Conserve",price:3.5},
-            {name:"Sottaceti",aisle:"4",category:"Conserve",price:2.2},
-            
-            // Bevande
-            {name:"Acqua Naturale",aisle:"5",category:"Bevande",price:0.3},
-            {name:"Acqua Frizzante",aisle:"5",category:"Bevande",price:0.3},
-            {name:"Coca Cola",aisle:"5",category:"Bevande",price:1.5},
-            {name:"Aranciata",aisle:"5",category:"Bevande",price:1.2},
-            {name:"Succo d'Arancia",aisle:"5",category:"Bevande",price:2.5},
-            {name:"Succo di Pesca",aisle:"5",category:"Bevande",price:2.5},
-            {name:"Succo ACE",aisle:"5",category:"Bevande",price:2.8},
-            {name:"Tè Freddo",aisle:"5",category:"Bevande",price:1.8},
-            {name:"Birra",aisle:"5",category:"Alcol",price:2.5},
-            {name:"Vino Rosso",aisle:"5",category:"Alcol",price:5.5},
-            {name:"Vino Bianco",aisle:"5",category:"Alcol",price:5.5},
-            {name:"Prosecco",aisle:"5",category:"Alcol",price:6.5},
-            
-            // Colazione
-            {name:"Caffè Macinato",aisle:"6",category:"Colazione",price:4.5},
-            {name:"Caffè in Cialde",aisle:"6",category:"Colazione",price:8.5},
-            {name:"Tè Nero",aisle:"6",category:"Colazione",price:3.5},
-            {name:"Tè Verde",aisle:"6",category:"Colazione",price:3.8},
-            {name:"Camomilla",aisle:"6",category:"Colazione",price:2.5},
-            {name:"Cereali",aisle:"6",category:"Colazione",price:3.5},
-            {name:"Muesli",aisle:"6",category:"Colazione",price:4.5},
-            {name:"Corn Flakes",aisle:"6",category:"Colazione",price:3.2},
-            {name:"Miele",aisle:"6",category:"Colazione",price:5.5},
-            {name:"Marmellata",aisle:"6",category:"Colazione",price:3.5},
-            {name:"Nutella",aisle:"6",category:"Colazione",price:4.5},
-            {name:"Cacao",aisle:"6",category:"Colazione",price:3.8},
-            
-            // Surgelati
-            {name:"Piselli Surgelati",aisle:"Surgelati",category:"Verdure Surgelate",price:2.5},
-            {name:"Spinaci Surgelati",aisle:"Surgelati",category:"Verdure Surgelate",price:2.5},
-            {name:"Minestrone Surgelato",aisle:"Surgelati",category:"Verdure Surgelate",price:3.2},
-            {name:"Pizza Surgelata",aisle:"Surgelati",category:"Piatti Pronti",price:4.5},
-            {name:"Lasagne Surgelate",aisle:"Surgelati",category:"Piatti Pronti",price:5.5},
-            {name:"Pesce Spada Surgelato",aisle:"Surgelati",category:"Pesce",price:12.5},
-            {name:"Gamberi Surgelati",aisle:"Surgelati",category:"Pesce",price:14.5},
-            {name:"Bastoncini di Pesce",aisle:"Surgelati",category:"Pesce",price:4.5},
-            {name:"Gelato",aisle:"Surgelati",category:"Dolci",price:3.5},
-            {name:"Ghiaccioli",aisle:"Surgelati",category:"Dolci",price:2.5},
-            
-            // Prodotti per la Casa
-            {name:"Detersivo Piatti",aisle:"7",category:"Pulizia",price:2.5},
-            {name:"Detersivo Lavatrice",aisle:"7",category:"Pulizia",price:5.5},
-            {name:"Ammorbidente",aisle:"7",category:"Pulizia",price:3.5},
-            {name:"Candeggina",aisle:"7",category:"Pulizia",price:1.5},
-            {name:"Sgrassatore",aisle:"7",category:"Pulizia",price:3.2},
-            {name:"Detergente Pavimenti",aisle:"7",category:"Pulizia",price:3.5},
-            {name:"Carta Igienica",aisle:"7",category:"Igiene Casa",price:4.5},
-            {name:"Carta Casa",aisle:"7",category:"Igiene Casa",price:3.5},
-            {name:"Tovaglioli",aisle:"7",category:"Igiene Casa",price:2.5},
-            {name:"Pellicola",aisle:"7",category:"Igiene Casa",price:2.8},
-            {name:"Alluminio",aisle:"7",category:"Igiene Casa",price:3.2},
-            {name:"Sacchetti Spazzatura",aisle:"7",category:"Igiene Casa",price:3.5},
-            {name:"Spugne",aisle:"7",category:"Pulizia",price:2.2},
-            {name:"Panni Microfibra",aisle:"7",category:"Pulizia",price:4.5},
-            
-            // Igiene Personale
-            {name:"Shampoo",aisle:"8",category:"Igiene Personale",price:4.5},
-            {name:"Balsamo",aisle:"8",category:"Igiene Personale",price:4.5},
-            {name:"Bagnoschiuma",aisle:"8",category:"Igiene Personale",price:3.5},
-            {name:"Sapone",aisle:"8",category:"Igiene Personale",price:2.5},
-            {name:"Dentifricio",aisle:"8",category:"Igiene Personale",price:3.2},
-            {name:"Spazzolino",aisle:"8",category:"Igiene Personale",price:2.8},
-            {name:"Collutorio",aisle:"8",category:"Igiene Personale",price:4.5},
-            {name:"Deodorante",aisle:"8",category:"Igiene Personale",price:3.5},
-            {name:"Crema Viso",aisle:"8",category:"Cosmesi",price:8.5},
-            {name:"Crema Corpo",aisle:"8",category:"Cosmesi",price:6.5},
-            {name:"Crema Mani",aisle:"8",category:"Cosmesi",price:4.5},
-            {name:"Rasoio",aisle:"8",category:"Igiene Personale",price:5.5},
-            {name:"Schiuma da Barba",aisle:"8",category:"Igiene Personale",price:4.2},
-            {name:"Assorbenti",aisle:"8",category:"Igiene Personale",price:4.5},
-            {name:"Pannolini",aisle:"8",category:"Prima Infanzia",price:12.5},
-            {name:"Salviette",aisle:"8",category:"Prima Infanzia",price:3.5},
-            
-            // Altri prodotti comuni
-            {name:"Zucchero",aisle:"3",category:"Dolcificanti",price:1.2},
-            {name:"Zucchero di Canna",aisle:"3",category:"Dolcificanti",price:1.8},
-            {name:"Dolcificante",aisle:"3",category:"Dolcificanti",price:3.5},
-            {name:"Farina 00",aisle:"1",category:"Farine",price:1.2},
-            {name:"Farina Integrale",aisle:"1",category:"Farine",price:1.5},
-            {name:"Lievito di Birra",aisle:"1",category:"Lieviti",price:0.5},
-            {name:"Lievito per Dolci",aisle:"1",category:"Lieviti",price:0.8},
-            {name:"Uova",aisle:"Frigo",category:"Uova",price:2.8},
-            {name:"Maionese",aisle:"4",category:"Salse",price:2.5},
-            {name:"Ketchup",aisle:"4",category:"Salse",price:2.2},
-            {name:"Senape",aisle:"4",category:"Salse",price:2.5},
-            {name:"Pesto",aisle:"4",category:"Salse",price:3.5},
-            {name:"Cioccolato Fondente",aisle:"2",category:"Dolci",price:2.5},
-            {name:"Cioccolato al Latte",aisle:"2",category:"Dolci",price:2.5},
-            {name:"Caramelle",aisle:"2",category:"Dolci",price:2.0},
-            {name:"Chewing Gum",aisle:"2",category:"Dolci",price:1.5},
-            {name:"Snack Salati",aisle:"2",category:"Snack",price:2.5},
-            {name:"Patatine",aisle:"2",category:"Snack",price:2.8},
-            {name:"Noccioline",aisle:"2",category:"Snack",price:3.5},
-            {name:"Mandorle",aisle:"2",category:"Frutta Secca",price:5.5},
-            {name:"Noci",aisle:"2",category:"Frutta Secca",price:6.5},
-            {name:"Pistacchi",aisle:"2",category:"Frutta Secca",price:8.5},
-            {name:"Uvetta",aisle:"2",category:"Frutta Secca",price:3.5},
-            {name:"Pinoli",aisle:"2",category:"Frutta Secca",price:12.5},
-            {name:"Prugne Secche",aisle:"2",category:"Frutta Secca",price:4.5},
-            {name:"Albicocche Secche",aisle:"2",category:"Frutta Secca",price:5.5},
-            {name:"Datteri",aisle:"2",category:"Frutta Secca",price:4.8},
-            {name:"Fichi Secchi",aisle:"2",category:"Frutta Secca",price:5.2},
-            {name:"Cibo per Gatti",aisle:"9",category:"Animali",price:4.5},
-            {name:"Cibo per Cani",aisle:"9",category:"Animali",price:5.5},
-            {name:"Lettiera Gatti",aisle:"9",category:"Animali",price:6.5},
-            {name:"Pannolini per Cani",aisle:"9",category:"Animali",price:8.5},
-            {name:"Giochi per Animali",aisle:"9",category:"Animali",price:5.5},
-            {name:"Pile AA",aisle:"10",category:"Elettronica",price:4.5},
-            {name:"Pile AAA",aisle:"10",category:"Elettronica",price:4.5},
-            {name:"Lampadine",aisle:"10",category:"Elettronica",price:3.5},
-            {name:"Candele",aisle:"10",category:"Casa",price:3.5},
-            {name:"Fiammiferi",aisle:"10",category:"Casa",price:1.0},
-            {name:"Accendino",aisle:"10",category:"Casa",price:1.5}
-        ];
-        
-        // Inizializzazione
-        try {
-            app = firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            auth = firebase.auth();
-            isOnline = true;
-            
-            // Gestione autenticazione
-            const urlParams = new URLSearchParams(window.location.search);
-            listId = urlParams.get('list');
-            
-            if (listId) {
-                // Lista condivisa - richiedi PIN
-                document.getElementById('authModal').style.display = 'flex';
-                document.getElementById('authMessage').textContent = 'Inserisci il PIN per accedere a questa lista condivisa:';
-            } else {
-                // Nuova lista - crea e richiedi PIN
-                auth.signInAnonymously().then(() => {
-                    listId = db.ref('lists').push().key;
-                    const newUrl = window.location.origin + window.location.pathname + '?list=' + listId;
-                    window.history.pushState({}, '', newUrl);
-                    document.getElementById('authModal').style.display = 'flex';
-                    document.getElementById('authMessage').textContent = 'Crea un PIN per proteggere questa lista (minimo 4 caratteri):';
-                    initializeApp();
-                });
-            }
-        } catch (error) {
-            console.log('Firebase non configurato, modalità offline');
-            isOnline = false;
-            listId = 'local';
-            loadLocalData();
-            initializeApp();
-        }
-        
-        function authenticate() {
-            const pin = document.getElementById('authPin').value;
-            if (pin.length < 4) {
-                alert('Il PIN deve essere lungo almeno 4 caratteri');
-                return;
-            }
-            
-            if (isOnline) {
-                const listRef = db.ref('lists/' + listId);
-                listRef.once('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data && data.pin) {
-                        // Lista esistente - verifica PIN
-                        if (data.pin === pin) {
-                            document.getElementById('authModal').style.display = 'none';
-                            initializeApp();
-                        } else {
-                            alert('PIN non corretto');
-                        }
-                    } else {
-                        // Nuova lista - salva PIN
-                        listRef.update({ pin: pin }).then(() => {
-                            document.getElementById('authModal').style.display = 'none';
-                            initializeApp();
-                        });
-                    }
-                });
-            }
-        }
-        
-        function initializeApp() {
-            updateStatus();
-            loadCatalog();
-            loadShoppingList();
-            loadPantry();
-            populateFilters();
-            
-            if (isOnline) {
-                setupRealtimeSync();
-                const shareLink = window.location.href;
-                document.getElementById('shareLink').value = shareLink;
-                document.getElementById('shareSection').style.display = 'block';
-            }
-        }
-        
-        function updateStatus() {
-            const status = document.getElementById('status');
-            if (isOnline) {
-                status.textContent = '🟢 Online - Sincronizzato';
-                status.style.color = '#4CAF50';
-            } else {
-                status.textContent = '🔴 Offline - Solo locale';
-                status.style.color = '#f44336';
-            }
-        }
-        
-        function setupRealtimeSync() {
-            // Sincronizzazione lista spesa
-            db.ref('lists/' + listId + '/items').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    localStorage.setItem('shoppingList_' + listId, JSON.stringify(data));
-                    renderShoppingList();
-                }
-            });
-            
-            // Sincronizzazione catalogo
-            db.ref('lists/' + listId + '/catalog').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    localStorage.setItem('catalog_' + listId, JSON.stringify(data));
-                    renderCatalog();
-                    populateFilters();
-                }
-            });
-            
-            // Sincronizzazione dispensa
-            db.ref('lists/' + listId + '/pantry').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    localStorage.setItem('pantry_' + listId, JSON.stringify(data));
-                    renderPantry();
-                    checkAutoRestock();
-                }
-            });
-        }
-        
-        function loadCatalog() {
-            let catalog = getStoredData('catalog');
-            if (!catalog || catalog.length === 0) {
-                catalog = defaultCatalog;
-                saveData('catalog', catalog);
-            }
-            renderCatalog();
-        }
-        
-        function loadShoppingList() {
-            renderShoppingList();
-        }
-        
-        function loadPantry() {
-            renderPantry();
-            checkAutoRestock();
-        }
-        
-        function getStoredData(key) {
-            const stored = localStorage.getItem(key + '_' + listId);
-            return stored ? JSON.parse(stored) : (key === 'catalog' ? [] : (key === 'pantry' ? {} : []));
-        }
-        
-        function saveData(key, data) {
-            localStorage.setItem(key + '_' + listId, JSON.stringify(data));
-            if (isOnline) {
-                db.ref('lists/' + listId + '/' + key).set(data);
-            }
-        }
-        
-        function loadLocalData() {
-            // Carica dati locali se esistono
-            if (!localStorage.getItem('catalog_local')) {
-                localStorage.setItem('catalog_local', JSON.stringify(defaultCatalog));
-            }
-        }
-        
-        // Gestione Tab
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tab + '-tab').classList.add('active');
-            
-            if (tab === 'catalog') renderCatalog();
-            if (tab === 'shopping') renderShoppingList();
-            if (tab === 'pantry') renderPantry();
-        }
-        
-        // Funzioni Lista Spesa
-        function quickAddItem() {
-            const input = document.getElementById('quickAddInput');
-            const name = input.value.trim();
-            if (!name) return;
-            
-            const items = getStoredData('shoppingList');
-            const catalog = getStoredData('catalog');
-            const product = catalog.find(p => p.name.toLowerCase() === name.toLowerCase());
-            
-            const newItem = product ? {...product, completed: false} : {
-                name: name,
-                aisle: '',
-                category: '',
-                completed: false
-            };
-            
-            items.push(newItem);
-            saveData('shoppingList', items);
-            input.value = '';
-            renderShoppingList();
-        }
-        
-        function toggleItem(index) {
-            const items = getStoredData('shoppingList');
-            items[index].completed = !items[index].completed;
-            
-            // Se completato, aggiungi alla dispensa
-            if (items[index].completed) {
-                addToPantry(items[index]);
-            }
-            
-            saveData('shoppingList', items);
-            renderShoppingList();
-        }
-        
-        function deleteShoppingItem(index) {
-            const items = getStoredData('shoppingList');
-            items.splice(index, 1);
-            saveData('shoppingList', items);
-            renderShoppingList();
-        }
-        
-        function renderShoppingList() {
-            const items = getStoredData('shoppingList');
-            const list = document.getElementById('shoppingList');
-            
-            list.innerHTML = items.map((item, index) => `
-                <li class="shopping-item ${item.completed ? 'completed' : ''}">
-                    <input type="checkbox" ${item.completed ? 'checked' : ''} 
-                           onchange="toggleItem(${index})">
-                    <div class="item-info">
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-details">
-                            ${item.aisle ? `📍 ${item.aisle}` : ''} 
-                            ${item.category ? `• ${item.category}` : ''} 
-                            ${item.price ? `• €${item.price.toFixed(2)}` : ''}
-                        </div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="delete-btn" onclick="deleteShoppingItem(${index})">🗑️</button>
-                    </div>
-                </li>
-            `).join('');
-        }
-        
-        // Funzioni Dispensa
-        function addToPantry(product) {
-            const pantry = getStoredData('pantry');
-            const key = product.name;
-            
-            if (pantry[key]) {
-                pantry[key].quantity += 1;
-            } else {
-                pantry[key] = {
-                    ...product,
-                    quantity: 1
-                };
-            }
-            
-            saveData('pantry', pantry);
-            renderPantry();
-            checkAutoRestock();
-        }
-        
-        function updatePantryQuantity(productName, change) {
-            const pantry = getStoredData('pantry');
-            if (pantry[productName]) {
-                pantry[productName].quantity = Math.max(0, pantry[productName].quantity + change);
-                if (pantry[productName].quantity === 0) {
-                    delete pantry[productName];
-                }
-                saveData('pantry', pantry);
-                renderPantry();
-                checkAutoRestock();
-            }
-        }
-        
-        function setPantryQuantity(productName, quantity) {
-            const pantry = getStoredData('pantry');
-            const catalog = getStoredData('catalog');
-            
-            if (quantity <= 0) {
-                delete pantry[productName];
-            } else {
-                if (!pantry[productName]) {
-                    const product = catalog.find(p => p.name === productName);
-                    if (product) {
-                        pantry[productName] = {...product, quantity: quantity};
-                    }
-                } else {
-                    pantry[productName].quantity = quantity;
-                }
-            }
-            
-            saveData('pantry', pantry);
-            renderPantry();
-            checkAutoRestock();
-        }
-        
-        function checkAutoRestock() {
-            const pantry = getStoredData('pantry');
-            const catalog = getStoredData('catalog');
-            const shoppingList = getStoredData('shoppingList');
-            
-            // Controlla ogni prodotto nel catalogo con soglia definita
-            catalog.forEach(product => {
-                if (product.threshold && product.threshold > 0) {
-                    const currentQty = pantry[product.name] ? pantry[product.name].quantity : 0;
-                    
-                    // Se sotto soglia e non già in lista
-                    if (currentQty < product.threshold) {
-                        const alreadyInList = shoppingList.some(item => 
-                            item.name === product.name && !item.completed
-                        );
-                        
-                        if (!alreadyInList) {
-                            shoppingList.push({...product, completed: false, autoAdded: true});
-                        }
-                    }
-                }
-            });
-            
-            saveData('shoppingList', shoppingList);
-            renderShoppingList();
-        }
-        
-        function renderPantry() {
-            const pantry = getStoredData('pantry');
-            const catalog = getStoredData('catalog');
-            const search = document.getElementById('pantrySearch')?.value.toLowerCase() || '';
-            const filter = document.getElementById('pantryFilter')?.value || 'all';
-            
-            const items = Object.entries(pantry)
-                .filter(([name, item]) => {
-                    const matchesSearch = name.toLowerCase().includes(search);
-                    const product = catalog.find(p => p.name === name);
-                    const isLowStock = product && product.threshold && item.quantity < product.threshold;
-                    const matchesFilter = filter === 'all' || (filter === 'low' && isLowStock);
-                    return matchesSearch && matchesFilter;
-                })
-                .sort((a, b) => a[0].localeCompare(b[0]));
-            
-            const list = document.getElementById('pantryList');
-            
-            if (items.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Nessun prodotto in dispensa</p>';
-                return;
-            }
-            
-            list.innerHTML = items.map(([name, item]) => {
-                const product = catalog.find(p => p.name === name);
-                const isLowStock = product && product.threshold && item.quantity < product.threshold;
-                
-                return `
-                    <div class="pantry-item ${isLowStock ? 'low-stock' : ''}">
-                        <div class="pantry-info">
-                            <div class="pantry-name">
-                                ${name}
-                                ${isLowStock ? '<span class="low-stock-badge">⚠️ Scorta bassa</span>' : ''}
-                            </div>
-                            <div class="pantry-details">
-                                ${item.category || ''} ${item.aisle ? `• ${item.aisle}` : ''}
-                                ${product && product.threshold ? `• Soglia: ${product.threshold}` : ''}
-                            </div>
-                        </div>
-                        <div class="pantry-quantity">
-                            <button onclick="updatePantryQuantity('${name}', -1)">−</button>
-                            <span>${item.quantity}</span>
-                            <button onclick="updatePantryQuantity('${name}', 1)">+</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function filterPantry() {
-            renderPantry();
-        }
-        
-        function openInventoryModal() {
-            const catalog = getStoredData('catalog');
-            const pantry = getStoredData('pantry');
-            const list = document.getElementById('inventoryList');
-            
-            const sortedCatalog = [...catalog].sort((a, b) => a.name.localeCompare(b.name));
-            
-            list.innerHTML = sortedCatalog.map(product => {
-                const currentQty = pantry[product.name] ? pantry[product.name].quantity : 0;
-                return `
-                    <div class="pantry-item">
-                        <div class="pantry-info">
-                            <div class="pantry-name">${product.name}</div>
-                            <div class="pantry-details">
-                                ${product.category || ''} ${product.aisle ? `• ${product.aisle}` : ''}
-                                ${product.threshold ? `• Soglia: ${product.threshold}` : ''}
-                            </div>
-                        </div>
-                        <div class="pantry-quantity">
-                            <button onclick="setPantryQuantity('${product.name}', ${Math.max(0, currentQty - 1)})">−</button>
-                            <span>${currentQty}</span>
-                            <button onclick="setPantryQuantity('${product.name}', ${currentQty + 1})">+</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('inventoryModal').style.display = 'block';
-        }
-        
-        function closeInventoryModal() {
-            document.getElementById('inventoryModal').style.display = 'none';
-        }
-        
-        // Funzioni Catalogo
-        function renderCatalog() {
-            const catalog = getStoredData('catalog');
-            const search = document.getElementById('catalogSearch')?.value.toLowerCase() || '';
-            const categoryFilter = document.getElementById('categoryFilter')?.value || '';
-            const aisleFilter = document.getElementById('aisleFilter')?.value || '';
-            
-            const filtered = catalog.filter(p => {
-                const matchesSearch = p.name.toLowerCase().includes(search);
-                const matchesCategory = !categoryFilter || p.category === categoryFilter;
-                const matchesAisle = !aisleFilter || p.aisle === aisleFilter;
-                return matchesSearch && matchesCategory && matchesAisle;
-            });
-            
-            const grid = document.getElementById('catalogGrid');
-            grid.innerHTML = filtered.map((product, index) => `
-                <div class="catalog-item ${selectedProducts.has(index) ? 'selected' : ''}" 
-                     onclick="toggleProductSelection(${index})">
-                    <div style="font-weight: 600; margin-bottom: 5px;">${product.name}</div>
-                    <div style="font-size: 14px; color: #666;">
-                        ${product.aisle ? `📍 ${product.aisle}` : ''}
-                        ${product.category ? `<br>${product.category}` : ''}
-                        ${product.price ? `<br>€${product.price.toFixed(2)}` : ''}
-                        ${product.threshold ? `<br>⚠️ Soglia: ${product.threshold}` : ''}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <button class="edit-btn" onclick="event.stopPropagation(); editProduct(${index})" 
-                                style="margin-right: 5px; padding: 5px 10px;">✏️</button>
-                        <button class="delete-btn" onclick="event.stopPropagation(); deleteProduct(${index})"
-                                style="padding: 5px 10px;">🗑️</button>
-                    </div>
+<body>
+    <div class="au" id="AS" style="display:none">
+        <div class="ac">
+            <h1>🛒</h1>
+            <h2 id="aT">Lista Spesa</h2>
+            <p id="aS">Crea una nuova lista</p>
+            <div class="ae" id="aE"></div><input type="text" id="aN" placeholder="Il tuo nome" maxlength="20"><input
+                type="password" id="aP" placeholder="Password lista (min 4)"><button class="mb" id="aB"
+                onclick="doAuth()">🛒 Crea Lista</button>
+            <div class="at" id="aG" onclick="togA()">Hai già un link? Accedi</div>
+        </div>
+    </div>
+    <div class="header">
+        <h1>🛒 <span id="hT">Spesa</span></h1>
+        <div class="header-actions"><span id="cn" class="obadge off">locale</span><button class="hbtn"
+                onclick="showSh()">📤</button><button class="hbtn" onclick="showSt()">⚙️</button></div>
+    </div>
+    <div id="cP" class="page active">
+        <div class="sbox-wrap">
+            <div class="sbox"><span>🔍</span><input type="text" id="sI" placeholder="Cerca prodotto..."
+                    autocomplete="off"><button class="sclr" id="sC" onclick="clrS()">✕</button></div>
+        </div>
+        <div class="chips" id="ch"></div>
+        <div class="cnt"><span id="cT"></span><button class="abtn" onclick="showPF()">＋ Nuovo</button></div>
+        <div id="pL"></div>
+    </div>
+    <div id="lP" class="page">
+        <div id="lC"></div>
+    </div>
+    <div id="stP" class="page">
+        <div id="stC"></div>
+    </div>
+    <div id="paP" class="page">
+        <div id="paC"></div>
+    </div>
+    <div class="tab-bar"><button class="tab active" onclick="goT('catalog')" id="t1"><span
+                class="tab-icon">📦</span>Catalogo</button><button class="tab" onclick="goT('list')" id="t2"><span
+                class="tab-icon">📋</span>Lista<span class="tbadge" id="lB"></span></button><button class="tab"
+            onclick="goT('pantry')" id="tPa"><span class="tab-icon">🏠</span>Dispensa</button><button class="tab"
+            onclick="goT('stats')" id="t3"><span class="tab-icon">📊</span>Stats</button></div>
+    <div class="mo" id="sM" onclick="if(event.target===this)cM('sM')">
+        <div class="md">
+            <h2>📤 Condividi</h2>
+            <p style="text-align:center;font-size:13px;margin-bottom:10px">Invia link + password:</p>
+            <div class="ml" id="sU"></div><button class="mb" onclick="cpSh()">📋 Copia Link</button><button class="mb s"
+                onclick="cM('sM')">Chiudi</button>
+        </div>
+    </div>
+    <div class="mo" id="pM" onclick="if(event.target===this)cM('pM')">
+        <div class="md">
+            <h2 id="pT">Nuovo Prodotto</h2><input type="hidden" id="pI">
+            <div class="fg"><label>Nome</label><input type="text" id="fN" placeholder="es. Pasta Barilla"></div>
+            <div class="fr">
+                <div class="fg"><label>Corsia</label><input type="text" id="fA" placeholder="5, BF, BP"></div>
+                <div class="fg"><label>Prezzo €</label><input type="number" id="fP" step="0.10" placeholder="2.50">
                 </div>
-            `).join('');
+            </div>
+            <div class="fg"><label>Categoria</label><input type="text" id="fC" list="dL"
+                    placeholder="Scegli o scrivi"><datalist id="dL"></datalist></div>
+            <div class="fg"><label>Note</label><input type="text" id="fO" placeholder="Opzionale"></div>
+            <div class="fg"><label>Soglia Dispensa</label><input type="number" id="fTh" min="0" placeholder="0 = no auto-restock"></div><button
+                class="mb" onclick="savP()">💾 Salva</button><button class="mb d" id="dB" style="display:none"
+                onclick="delP()">🗑️ Elimina</button><button class="mb s" onclick="cM('pM')">Annulla</button>
+        </div>
+    </div>
+    <div id="sS" class="ss" style="display:none">
+        <h2>⚙️ Firebase</h2>
+        <p>Incolla la configurazione (vedi README):</p><textarea id="fI" class="si" rows="7"
+            placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea><button class="sb" onclick="savFb()">💾
+            Salva</button><button class="sb sk" onclick="hidSt()">Annulla</button>
+        <div class="sn">💡 Senza Firebase = solo locale</div><br><button class="sb sk" onclick="doOut()"
+            style="color:var(--r)">🚪 Esci</button>
+    </div>
+    <div class="toast" id="tt"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script>
+        const DF = [{ n: "Tassoni", a: "5", c: "Bevande", pr: 1.80, no: "" }, { n: "Chinò Zero", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Serprino", a: "4", c: "Bevande", pr: 3.50, no: "Vino frizzante" }, { n: "Birra piccola", a: "6", c: "Bevande", pr: 1.50, no: "" }, { n: "Aperitivo genziana Lurisia", a: "2", c: "Bevande", pr: 2.50, no: "" }, { n: "Lemonsoda Zero", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Coca Cola Zero", a: "5", c: "Bevande", pr: 1.80, no: "" }, { n: "Acqua naturale", a: "", c: "Bevande", pr: 0.50, no: "" }, { n: "Succhetti alla pera", a: "5", c: "Bevande", pr: 2.00, no: "" }, { n: "Birra IPA Moretti", a: "6", c: "Bevande", pr: 2.00, no: "" }, { n: "Succo pera 1L", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Birra grande", a: "6", c: "Bevande", pr: 2.50, no: "" }, { n: "Succo Ace 1L", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Acqua frizzante", a: "", c: "Bevande", pr: 0.50, no: "" }, { n: "Menta Fabbri", a: "", c: "Bevande", pr: 4.00, no: "Sciroppo" }, { n: "Acqua demineralizzata", a: "", c: "Bevande", pr: 1.00, no: "" }, { n: "Diger", a: "", c: "Bevande", pr: 3.50, no: "" }, { n: "Tisane Pompadur", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Cialde caffè", a: "20", c: "Tè e Tisane", pr: 5.00, no: "" }, { n: "Cialde caffè deca", a: "20", c: "Tè e Tisane", pr: 5.00, no: "" }, { n: "Infuso Mela d'Oriente", a: "20", c: "Tè e Tisane", pr: 3.50, no: "" }, { n: "Tisane fredde", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Thè", a: "20", c: "Tè e Tisane", pr: 2.50, no: "" }, { n: "Té allo zenzero", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Gingerini", a: "1", c: "Dolci e Snack", pr: 2.50, no: "" }, { n: "Farfalle integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Casarecce integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Tortiglioni integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Sedanini integrali", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Caserecce integrali", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "I sedani rigati Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "La mezza manica Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "La linguina Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Il Fusillo Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Linguine", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Spaghetti", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Trofie", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Pasta generica", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Pasta integrale", a: "17", c: "Pasta", pr: 1.30, no: "" }, { n: "Tortiglioni integrali", a: "17", c: "Pasta", pr: 1.30, no: "" }, { n: "Riso carnaroli", a: "7", c: "Riso e Cereali", pr: 2.50, no: "" }, { n: "Riso basmati", a: "", c: "Riso e Cereali", pr: 2.80, no: "" }, { n: "Avena", a: "", c: "Riso e Cereali", pr: 2.50, no: "" }, { n: "Polenta", a: "", c: "Riso e Cereali", pr: 2.00, no: "" }, { n: "Fette biscottate", a: "24", c: "Pane e Forno", pr: 1.40, no: "" }, { n: "Macoritti integrali", a: "26", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Ricciolino olio/integrale", a: "26", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Bruschette", a: "", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Piadelle", a: "", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Crackers al riso", a: "26", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Grissini grossi", a: "", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Pane", a: "", c: "Pane e Forno", pr: 1.80, no: "" }, { n: "Pane grattuggiato", a: "", c: "Pane e Forno", pr: 1.50, no: "" }, { n: "Pane integrale hamburger", a: "", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Crostini insalate/vellutate", a: "28", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Taralli", a: "28", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Cioccolatini fondenti", a: "1", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Cioccolata nocciole Novi", a: "1", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Biscotti", a: "18", c: "Dolci e Snack", pr: 2.50, no: "Saracene, Bucaneve, Fagottini, Tre Marie" }, { n: "Digestives cioccolato", a: "18", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Fonzie", a: "28", c: "Dolci e Snack", pr: 1.50, no: "" }, { n: "Patatine", a: "28", c: "Dolci e Snack", pr: 2.00, no: "" }, { n: "Biscotti per torta", a: "18", c: "Dolci e Snack", pr: 2.50, no: "" }, { n: "Pop corn", a: "", c: "Dolci e Snack", pr: 2.00, no: "" }, { n: "Cioccolata mandorle", a: "", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Crema Pistacchio", a: "", c: "Dolci e Snack", pr: 5.00, no: "" }, { n: "Crema cioccolato fondente", a: "22", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Marmellatine formaggi", a: "", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Mostarda", a: "", c: "Dolci e Snack", pr: 4.00, no: "" }, { n: "Cacao amaro", a: "29", c: "Farine e Ingredienti", pr: 3.00, no: "" }, { n: "Fecola di patate", a: "29", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Farina di riso", a: "29", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Farina integrale", a: "29", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Farina manitoba/Caputo", a: "29", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Farina 00", a: "29", c: "Farine e Ingredienti", pr: 1.00, no: "" }, { n: "Zucchero bianco", a: "29", c: "Farine e Ingredienti", pr: 1.20, no: "" }, { n: "Zucchero di canna", a: "29", c: "Farine e Ingredienti", pr: 1.80, no: "" }, { n: "Zucchero a velo", a: "", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Zucchero", a: "29", c: "Farine e Ingredienti", pr: 1.20, no: "" }, { n: "Vanillina", a: "", c: "Farine e Ingredienti", pr: 0.80, no: "" }, { n: "Lievito pizza", a: "", c: "Farine e Ingredienti", pr: 0.50, no: "" }, { n: "Lievito dolci", a: "", c: "Farine e Ingredienti", pr: 0.80, no: "" }, { n: "Colla di pesce", a: "", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Passata pizza", a: "14", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Aceto balsamico Due vittorie", a: "12", c: "Salse e Condimenti", pr: 3.50, no: "" }, { n: "Maionese", a: "12", c: "Salse e Condimenti", pr: 2.20, no: "" }, { n: "Maionese monoporzioni", a: "12", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Salsa BBQ", a: "", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Aceto lavastoviglie", a: "12", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Funghi", a: "12", c: "Salse e Condimenti", pr: 2.50, no: "In vasetto" }, { n: "Sottaceti", a: "", c: "Salse e Condimenti", pr: 2.00, no: "" }, { n: "Concentrato pomodoro", a: "", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Dadi Bauer", a: "14", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Pesto", a: "", c: "Salse e Condimenti", pr: 2.80, no: "" }, { n: "Curcuma", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Cumino", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Paprika", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Peperoncino oliera", a: "14", c: "Spezie", pr: 1.50, no: "" }, { n: "Chiodi di garofano", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Pepe da macinare", a: "14", c: "Spezie", pr: 3.00, no: "" }, { n: "Sale grosso", a: "14", c: "Spezie", pr: 0.80, no: "" }, { n: "Sale fino", a: "14", c: "Spezie", pr: 0.80, no: "" }, { n: "Tonno", a: "10", c: "Conserve", pr: 3.50, no: "" }, { n: "Tonno in vetro", a: "10", c: "Conserve", pr: 4.50, no: "" }, { n: "Acciughe", a: "10", c: "Conserve", pr: 3.00, no: "" }, { n: "Fagioli rossi", a: "14", c: "Conserve", pr: 1.20, no: "" }, { n: "Fagioli borlotti", a: "14", c: "Conserve", pr: 1.20, no: "" }, { n: "Pinoli", a: "", c: "Conserve", pr: 6.00, no: "" }, { n: "Olio cuore", a: "10", c: "Olio", pr: 4.00, no: "" }, { n: "Olio con aglio", a: "10", c: "Olio", pr: 4.50, no: "" }, { n: "Olio oliva condire", a: "10", c: "Olio", pr: 6.50, no: "" }, { n: "Olio da cucina", a: "10", c: "Olio", pr: 4.00, no: "" }, { n: "Mandorle sgusciate", a: "32", c: "Frutta Secca", pr: 5.00, no: "" }, { n: "Noci sgusciate", a: "32", c: "Frutta Secca", pr: 5.50, no: "" }, { n: "Anacardi", a: "", c: "Frutta Secca", pr: 5.00, no: "" }, { n: "Tortellini", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Veggy food", a: "BF", c: "Banco Frigo", pr: 3.50, no: "" }, { n: "Stracchini", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Ricottine", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Mozzarelle", a: "BF", c: "Banco Frigo", pr: 1.50, no: "" }, { n: "Sottilette Light", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Falafel", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Pasta sfoglia", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Pancetta cubetti", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Sfoglia pasticcio", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Burro", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Yogurt magro Tanja", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Yogurt per torta", a: "BF", c: "Banco Frigo", pr: 1.50, no: "" }, { n: "Yogurt per Michele", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Grana", a: "BF", c: "Banco Frigo", pr: 5.00, no: "" }, { n: "Grana da grattuggiare", a: "BF", c: "Banco Frigo", pr: 5.00, no: "" }, { n: "Busta grana", a: "BF", c: "Banco Frigo", pr: 3.50, no: "" }, { n: "Fiocchi di latte", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Gelato", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Gelato Loacker", a: "BF", c: "Banco Frigo", pr: 4.50, no: "" }, { n: "Maxibon", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Taleggio/Morlacco/Scamorza", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Ricotta", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Yogurt Vipiteno Magro", a: "BF", c: "Banco Frigo", pr: 3.50, no: "Frutti bosco, fragola, vaniglia" }, { n: "Pasta sfoglia senza glutine", a: "", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Mascarpone", a: "", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Panna per torta", a: "", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Prosciutto cotto", a: "", c: "Salumeria", pr: 2.50, no: "" }, { n: "Asiago", a: "", c: "Salumeria", pr: 4.00, no: "" }, { n: "Formaggio a fette", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Prosciutto crudo", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Provola/scamorza", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Brie", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Pecossi", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Salame", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Fette filanti s.lattosio", a: "", c: "Salumeria", pr: 2.50, no: "" }, { n: "Latte parz. scremato", a: "31", c: "Latte e Panna", pr: 1.60, no: "Brick rossi" }, { n: "Panna Light cucina", a: "31", c: "Latte e Panna", pr: 1.20, no: "" }, { n: "Besciamella s.glutine", a: "", c: "Latte e Panna", pr: 2.00, no: "" }, { n: "Sfoglia pasticcio s.glutine", a: "", c: "Latte e Panna", pr: 2.50, no: "" }, { n: "Uova", a: "31", c: "Uova", pr: 2.80, no: "" }, { n: "Salsiccia", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Petti di pollo", a: "", c: "Carne", pr: 8.00, no: "" }, { n: "Pollo", a: "", c: "Carne", pr: 7.00, no: "" }, { n: "Carne da grigliare", a: "", c: "Carne", pr: 10.00, no: "" }, { n: "Carne spezzatino", a: "", c: "Carne", pr: 9.00, no: "" }, { n: "Costicine", a: "", c: "Carne", pr: 8.00, no: "" }, { n: "Carne per ragù", a: "", c: "Carne", pr: 9.00, no: "" }, { n: "Hamburger", a: "", c: "Carne", pr: 6.00, no: "" }, { n: "Alette", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Cevapcici", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Pesce per sugo", a: "BP", c: "Banco Pesce", pr: 8.00, no: "" }, { n: "Gamberi", a: "BP", c: "Banco Pesce", pr: 12.00, no: "" }, { n: "Capesante", a: "BP", c: "Banco Pesce", pr: 15.00, no: "" }, { n: "Pesce da grigliare", a: "BP", c: "Banco Pesce", pr: 10.00, no: "" }, { n: "Salmone", a: "", c: "Pesce", pr: 12.00, no: "" }, { n: "Mele", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Banane", a: "", c: "Frutta", pr: 1.80, no: "" }, { n: "Mandarini", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Arance", a: "", c: "Frutta", pr: 2.20, no: "" }, { n: "Pere", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Lamponi", a: "", c: "Frutta", pr: 3.50, no: "" }, { n: "Frutti rossi", a: "", c: "Frutta", pr: 3.50, no: "" }, { n: "Frutta per torta", a: "", c: "Frutta", pr: 3.00, no: "" }, { n: "Limoni", a: "", c: "Frutta", pr: 1.50, no: "" }, { n: "Avocado", a: "", c: "Frutta", pr: 2.00, no: "" }, { n: "Patate", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Carote", a: "", c: "Verdura", pr: 1.20, no: "" }, { n: "Aglio", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Peperoni", a: "", c: "Verdura", pr: 3.00, no: "" }, { n: "Porro", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Finocchi", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Radicchio", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Zucchine", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Melanzane", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Pomodori passata", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Pomodori", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Asparagi", a: "", c: "Verdura", pr: 3.50, no: "" }, { n: "Cipolle rosse", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Pomodorini", a: "", c: "Verdura", pr: 2.50, no: "" }, { n: "Cipolle bianche", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Broccoli", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Cavolfiori", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Spinaci", a: "", c: "Verdura", pr: 2.50, no: "" }, { n: "Insalata", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Saponetta Nesti Firenze", a: "9", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Elmex arancione", a: "11", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Elmex verde", a: "11", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Deodorante Dove", a: "11", c: "Igiene Persona", pr: 3.50, no: "" }, { n: "Crema mani L'Erboristica", a: "", c: "Igiene Persona", pr: 3.50, no: "" }, { n: "Sapone I provenzali", a: "9", c: "Igiene Persona", pr: 2.50, no: "" }, { n: "Sapone Fresh&Clean", a: "9", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Shampoo capelli mossi", a: "9", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Bagnoschiuma", a: "9", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Labello", a: "", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Cotone struccante", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Rasoi", a: "", c: "Igiene Persona", pr: 5.00, no: "" }, { n: "Ceretta viso", a: "", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Crema dopo sole", a: "", c: "Igiene Persona", pr: 5.00, no: "" }, { n: "Acetone", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Fazzoletti", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Assorbenti giorno", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Assorbenti notte", a: "13", c: "Igiene Femminile", pr: 3.50, no: "" }, { n: "Salvaslip cotone", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Salvaslip perizoma", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Pastiglie lavastoviglie", a: "21", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Detersivo neonati Winni's", a: "", c: "Pulizia Casa", pr: 5.00, no: "" }, { n: "Ammorbidente Chanteclair", a: "15", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Smacchiatore Omino Bianco", a: "17", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Anticalcare Calgon", a: "15", c: "Pulizia Casa", pr: 5.00, no: "" }, { n: "Detersivo piatti Svelto", a: "21", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Spray sgrassante cucina", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Wc net candeggina", a: "17", c: "Pulizia Casa", pr: 2.50, no: "" }, { n: "Detersivo lavatrice Chanteclair", a: "15", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Candeggina delicata", a: "15", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Candeggina", a: "15", c: "Pulizia Casa", pr: 1.50, no: "" }, { n: "Detersivo Perlana", a: "15", c: "Pulizia Casa", pr: 4.00, no: "" }, { n: "Detersivo Chanteclair", a: "15", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Sale lavastoviglie", a: "21", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Viakal profumato", a: "17", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Quasar vetri", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Quasar doccia", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Spray sgrassante bagno", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Spray multisuperficie", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Brillantante lavastoviglie", a: "", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Limone lavastoviglie", a: "", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Veleno formiche", a: "25", c: "Pulizia Casa", pr: 4.00, no: "" }, { n: "Diavolina", a: "", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Carta igienica Sensitive", a: "", c: "Carta e Casa", pr: 4.00, no: "" }, { n: "Carta cucina Sensitive", a: "", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Sacchetti 10L umido", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Sacchi 46L plastica", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Guanti S piatti", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Spugne Vileda", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Pellicola trasparente", a: "21", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Sacchetti freezer piccoli", a: "21", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Sacchetti freezer medi", a: "21", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Vaschette freezer", a: "21", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Tovaglioli FATO grigi", a: "30", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Roll pelucchi", a: "", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Panno vetri Vileda", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Spugne Glitzi", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Spugne piatte", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Guanti S pulizie", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Sacchi 50x60", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Sacchi 40L pannolini", a: "19", c: "Carta e Casa", pr: 3.50, no: "" }, { n: "Sacchi 80L secco", a: "19", c: "Carta e Casa", pr: 4.00, no: "" }, { n: "Sacchetti di carta", a: "", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Carta forno", a: "", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Fiocchetti regalo", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Carta da regalo", a: "23", c: "Regali e Varie", pr: 3.00, no: "" }, { n: "Etichette", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Sacchetti regalo", a: "23", c: "Regali e Varie", pr: 3.00, no: "" }, { n: "Spruzzino", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Coperchi vasetti 70mm", a: "", c: "Regali e Varie", pr: 2.50, no: "" }, { n: "Pannolini", a: "22", c: "Bambini", pr: 8.00, no: "" }, { n: "Magretti", a: "0", c: "Animali", pr: 3.00, no: "" }, { n: "Ossetti", a: "", c: "Animali", pr: 3.00, no: "" }, { n: "Crocchette Churro", a: "27", c: "Animali", pr: 10.00, no: "Miglior cane Active" }, { n: "Crocchette Sancho", a: "27", c: "Animali", pr: 8.00, no: "Miglior gatto sterilizzato" }, { n: "Pile AA", a: "4", c: "Varie", pr: 4.00, no: "" }, { n: "Semi giardino", a: "", c: "Varie", pr: 3.00, no: "" }, { n: "Terriccio acidofile", a: "", c: "Varie", pr: 5.00, no: "" }];
+        let P = [], cart = {}, hist = [], pant = {}, cTab = 'catalog', cCat = 'Tutti', sQ = '', db = null, lid = null, isC = false, aM = 'create';
+        function hL() { const h = location.hash.slice(1); return h.startsWith('list=') ? h.split('=')[1] : null }
+        async function hP(p) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('') }
+        function gF() { try { return JSON.parse(localStorage.getItem('fbConf')) } catch (e) { return null } }
+        function iF() { const c = gF(); if (!c) return false; try { if (!firebase.apps.length) firebase.initializeApp(c); db = firebase.database(); firebase.database().ref('.info/connected').on('value', s => { isC = s.val() === true; uC() }); return true } catch (e) { return false } }
+        function uC() { const e = $('cn'); if (isC) { e.className = 'obadge on'; e.textContent = '🟢 sync' } else if (gF()) { e.className = 'obadge off'; e.textContent = '🔴' } else { e.className = 'obadge off'; e.textContent = '📱 locale' } }
+        function $(id) { return document.getElementById(id) }
+        function shA() { aM = hL() ? 'join' : 'create'; uAU(); $('AS').style.display = 'flex' }
+        function uAU() { const c = aM === 'create'; $('aT').textContent = c ? 'Crea Lista' : 'Accedi'; $('aS').textContent = c ? 'Scegli nome e password' : 'Inserisci nome e password'; $('aB').textContent = c ? '🛒 Crea' : '🔑 Accedi'; $('aG').textContent = c ? 'Hai già un link? Accedi' : 'Crea nuova lista'; $('aE').textContent = '' }
+        function togA() { aM = aM === 'create' ? 'join' : 'create'; if (aM === 'create') history.replaceState(null, '', location.pathname); uAU() }
+        async function doAuth() {
+            const nm = $('aN').value.trim(), pin = $('aP').value.trim(), er = $('aE'); if (!nm) { er.textContent = 'Inserisci nome'; return } if (pin.length < 4) { er.textContent = 'Min 4 caratteri'; return } const ph = await hP(pin);
+            if (!db) { localStorage.setItem('uN', nm); localStorage.setItem('lP', ph); if (aM === 'create') { lid = 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); localStorage.setItem('lid', lid); location.hash = 'list=' + lid; iLoc() } else { lid = hL() || localStorage.getItem('lid'); if (!lid) { er.textContent = 'Nessuna lista'; return } const sp = localStorage.getItem('lP'); if (sp && sp !== ph) { er.textContent = 'Password errata'; return } } $('AS').style.display = 'none'; $('hT').textContent = nm; lLoc(); render(); return }
+            try {
+                await firebase.auth().signInAnonymously(); const uid = firebase.auth().currentUser.uid;
+                if (aM === 'create') { lid = 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); location.hash = 'list=' + lid; await db.ref('lists/' + lid + '/meta').set({ pinHash: ph, createdBy: uid, createdAt: Date.now() }); const pr = {}; DF.forEach((p, i) => { pr['p' + i] = p }); await db.ref('lists/' + lid + '/products').set(pr); await db.ref('lists/' + lid + '/cart').set({}); await db.ref('lists/' + lid + '/users/' + uid).set({ name: nm }); localStorage.setItem('lid', lid); localStorage.setItem('uN', nm) }
+                else { lid = hL(); if (!lid) { er.textContent = 'Nessuna lista nel link'; return } const m = (await db.ref('lists/' + lid + '/meta').once('value')).val(); if (!m) { er.textContent = 'Lista non trovata'; return } if (m.pinHash !== ph) { er.textContent = 'Password errata'; return } await db.ref('lists/' + lid + '/users/' + uid).set({ name: nm }); localStorage.setItem('lid', lid); localStorage.setItem('uN', nm) }
+                $('AS').style.display = 'none'; $('hT').textContent = nm; liFb()
+            } catch (e) { er.textContent = 'Errore: ' + e.message }
         }
-        
-        function toggleProductSelection(index) {
-            if (selectedProducts.has(index)) {
-                selectedProducts.delete(index);
-            } else {
-                selectedProducts.add(index);
-            }
-            renderCatalog();
-        }
-        
-        function addSelectedToShopping() {
-            const catalog = getStoredData('catalog');
-            const shoppingList = getStoredData('shoppingList');
-            
-            selectedProducts.forEach(index => {
-                const product = catalog[index];
-                if (!shoppingList.some(item => item.name === product.name)) {
-                    shoppingList.push({...product, completed: false});
-                }
+        function doOut() { if (!confirm('Uscire?')) return;['lid', 'uN', 'lP', 'lPr', 'lCa', 'lPa', 'fbConf'].forEach(k => localStorage.removeItem(k)); location.hash = ''; location.reload() }
+        function liFb() { db.ref('lists/' + lid + '/products').on('value', s => { const d = s.val(); P = d ? Object.entries(d).map(([k, v]) => ({ id: k, ...v })) : []; render() }); db.ref('lists/' + lid + '/cart').on('value', s => { cart = s.val() || {}; render() }); db.ref('lists/' + lid + '/history').on('value', s => { hist = s.val() || []; if (cTab === 'stats') rStats() }); db.ref('lists/' + lid + '/pantry').on('value', s => { pant = s.val() || {}; if (cTab === 'pantry') rPant() }) }
+        function iLoc() { const pr = {}; DF.forEach((p, i) => { pr['p' + i] = p }); localStorage.setItem('lPr', JSON.stringify(pr)); localStorage.setItem('lCa', JSON.stringify({})) }
+        function lLoc() { try { const p = JSON.parse(localStorage.getItem('lPr')); P = p ? Object.entries(p).map(([k, v]) => ({ id: k, ...v })) : []; cart = JSON.parse(localStorage.getItem('lCa')) || {}; hist = JSON.parse(localStorage.getItem('lHi')) || []; pant = JSON.parse(localStorage.getItem('lPa')) || {} } catch (e) { P = []; cart = {}; hist = []; pant = {} } }
+        function sLoc() { const p = {}; P.forEach(x => { p[x.id] = { n: x.n, a: x.a, c: x.c, pr: x.pr, no: x.no, th: x.th } }); localStorage.setItem('lPr', JSON.stringify(p)); localStorage.setItem('lCa', JSON.stringify(cart)); localStorage.setItem('lPa', JSON.stringify(pant)) }
+        function addC(id) { cart[id] = { qty: (cart[id]?.qty || 0) + 1 }; sC_() } function rmC(id) { if (!cart[id]) return; cart[id].qty > 1 ? cart[id].qty-- : delete cart[id]; sC_() }
+        function comp(id, el) { const p = P.find(x => x.id === id), q = cart[id]?.qty || 1; el.closest('.li').classList.add('dn'); setTimeout(() => { if (p) { logH([{ n: p.n, c: p.c, pr: p.pr, qty: q }]); if (!pant[id]) pant[id] = { qty: 0 }; pant[id].qty += q; sPan() } delete cart[id]; sC_(); chkTh(id) }, 300) }
+        function rstC() { if (!confirm('Svuotare?')) return; const it = Object.entries(cart).map(([id, d]) => { const p = P.find(x => x.id === id); if (p) { if (!pant[id]) pant[id] = { qty: 0 }; pant[id].qty += d.qty } return p ? { n: p.n, c: p.c, pr: p.pr, qty: d.qty } : null }).filter(Boolean); if (it.length) logH(it); sPan(); cart = {}; sC_(); toast('Svuotata!'); chkAllTh() }
+        function logH(items) { const trip = { ts: Date.now(), items: items, total: items.reduce((s, i) => s + i.pr * i.qty, 0) }; hist.push(trip); sH_() }
+        function sH_() { if (db && lid) db.ref('lists/' + lid + '/history').set(hist); else { localStorage.setItem('lHi', JSON.stringify(hist)) } }
+        function sC_() { if (db && lid) db.ref('lists/' + lid + '/cart').set(cart); else { sLoc(); render() } }
+        function sPan() { if (db && lid) db.ref('lists/' + lid + '/pantry').set(pant); else { localStorage.setItem('lPa', JSON.stringify(pant)); render() } }
+        function chkTh(id) { const p = P.find(x => x.id === id); if (!p || !p.th || p.th <= 0) return; const qty = pant[id]?.qty || 0; if (qty < p.th && !cart[id]) { cart[id] = { qty: 1 }; sC_(); toast('🔔 ' + p.n + ' aggiunto a carrello (sotto soglia)') } }
+        function chkAllTh() { P.forEach(p => { if (p.th && p.th > 0) { const qty = pant[p.id]?.qty || 0; if (qty < p.th && !cart[p.id]) { cart[p.id] = { qty: 1 } } } }); sC_() }
+        function addPan(id, delta) { if (!pant[id]) pant[id] = { qty: 0 }; pant[id].qty = Math.max(0, pant[id].qty + delta); sPan(); chkTh(id) }
+        function rPant() {
+            const el = $('paC');
+            let items = P.filter(p => { const hasQty = (pant[p.id]?.qty || 0) > 0; const hasThreshold = p.th && p.th > 0; return hasQty || hasThreshold }).map(p => ({ ...p, qty: pant[p.id]?.qty || 0 }));
+            items.sort((a, b) => a.n.localeCompare(b.n));
+            if (!items.length) { el.innerHTML = '<div class="es"><div class="ei">🏠</div><div class="et">Dispensa vuota</div><div style="font-size:13px">Completa una spesa per popolare la dispensa!</div></div>'; return }
+            const grp = {};
+            items.forEach(i => { if (!grp[i.c]) grp[i.c] = []; grp[i.c].push(i) });
+            const cats = Object.keys(grp).sort((a, b) => a.localeCompare(b));
+            let h = '';
+            cats.forEach(cat => {
+                h += '<div class="as"><div class="ah"><span class="ahb">' + esc(cat) + '</span></div>';
+                grp[cat].forEach(p => {
+                    const isLow = p.th && p.th > 0 && p.qty < p.th;
+                    const lowClass = isLow ? ' style="border-left:3px solid var(--o)"' : '';
+                    h += '<div class="pc"' + lowClass + '><div class="inf"><div class="pn">' + esc(p.n) + '</div><div class="pm">';
+                    if (p.th && p.th > 0) h += '<span class="ab bf">Soglia: ' + p.th + '</span>';
+                    if (isLow) h += '<span class="ab" style="background:var(--ob);color:var(--o)">⚠ Sotto soglia</span>';
+                    h += '</div></div><div class="qc"><button class="qb r" onclick="addPan(\'' + p.id + '\',-1)">−</button><div class="qv">' + p.qty + '</div><button class="qb a" onclick="addPan(\'' + p.id + '\',1)">+</button></div></div>'
+                });
+                h += '</div>'
             });
-            
-            saveData('shoppingList', shoppingList);
-            selectedProducts.clear();
-            renderCatalog();
-            switchTab('shopping');
-            document.querySelectorAll('.tab')[0].click();
+            el.innerHTML = h
         }
-        
-        function filterCatalog() {
-            renderCatalog();
+        function showPF(id) {
+            const e = !!id; $('pT').textContent = e ? 'Modifica' : 'Nuovo Prodotto'; $('dB').style.display = e ? 'block' : 'none'; $('pI').value = id || '';
+            $('dL').innerHTML = [...new Set(P.map(p => p.c))].sort().map(c => '<option value="' + c + '">').join('');
+            if (e) { const p = P.find(x => x.id === id); if (p) { $('fN').value = p.n; $('fA').value = p.a; $('fP').value = p.pr; $('fC').value = p.c; $('fO').value = p.no; $('fTh').value = p.th || '' } }
+            else { ['fN', 'fA', 'fP', 'fC', 'fO', 'fTh'].forEach(x => $(x).value = ''); if (cCat !== 'Tutti') $('fC').value = cCat }
+            $('pM').classList.add('active')
         }
-        
-        function populateFilters() {
-            const catalog = getStoredData('catalog');
-            const categories = [...new Set(catalog.map(p => p.category).filter(Boolean))].sort();
-            const aisles = [...new Set(catalog.map(p => p.aisle).filter(Boolean))].sort();
-            
-            const categoryFilter = document.getElementById('categoryFilter');
-            const aisleFilter = document.getElementById('aisleFilter');
-            
-            if (categoryFilter) {
-                categoryFilter.innerHTML = '<option value="">Tutte le categorie</option>' +
-                    categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        function savP() {
+            const id = $('pI').value, nm = $('fN').value.trim(), ai = $('fA').value.trim().toUpperCase(), pr = parseFloat($('fP').value) || 0, ct = $('fC').value.trim(), nt = $('fO').value.trim(), th = parseInt($('fTh').value) || 0;
+            if (!nm) { toast('❌ Nome!'); return } if (!ct) { toast('❌ Categoria!'); return }
+            const na = (ai === 'BF' || ai === 'BP') ? ai : ai.replace(/[^0-9]/g, ''), d = { n: nm, a: na, c: ct, pr: pr, no: nt, th: th };
+            if (db && lid) { id ? db.ref('lists/' + lid + '/products/' + id).set(d) : db.ref('lists/' + lid + '/products').push(d) }
+            else { if (id) { const i = P.findIndex(p => p.id === id); if (i >= 0) P[i] = { id, ...d } } else P.push({ id: 'p' + Date.now().toString(36), ...d }); sLoc(); render() }
+            cM('pM'); toast(id ? '✏️ Modificato' : '✅ Aggiunto')
+        }
+        function delP() {
+            const id = $('pI').value; if (!id || !confirm('Eliminare?')) return;
+            if (db && lid) { db.ref('lists/' + lid + '/products/' + id).remove(); if (cart[id]) { delete cart[id]; sC_() } }
+            else { P = P.filter(p => p.id !== id); if (cart[id]) delete cart[id]; sLoc(); render() } cM('pM'); toast('🗑️ Eliminato')
+        }
+        function render() { rCat(); rList(); if (cTab === 'pantry') rPant(); $('lB').textContent = Object.keys(cart).length || '' }
+        function rCh() { const cs = ['Tutti', ...new Set(P.map(p => p.c))].sort((a, b) => a === 'Tutti' ? -1 : b === 'Tutti' ? 1 : a.localeCompare(b)); $('ch').innerHTML = cs.map(c => '<span class="chip' + (c === cCat ? ' active' : '') + '" onclick="selC(\'' + c.replace(/'/g, "\\'") + '\')">' + c + '</span>').join('') }
+        function selC(c) { cCat = c; rCh(); rCat() }
+        function rCat() {
+            rCh(); const el = $('pL'); let f = P; if (cCat !== 'Tutti') f = f.filter(p => p.c === cCat); if (sQ) { const q = sQ.toLowerCase(); f = f.filter(p => p.n.toLowerCase().includes(q) || (p.no || '').toLowerCase().includes(q)) }
+            f.sort((a, b) => a.n.localeCompare(b.n)); $('cT').textContent = f.length + ' prodotti';
+            if (!f.length) { el.innerHTML = '<div class="es"><div class="ei">🔍</div><div class="et">Nessun risultato</div></div>'; return }
+            el.innerHTML = f.map(p => {
+                const q = cart[p.id]?.qty || 0, ac = p.a === 'BF' ? 'bf' : p.a === 'BP' ? 'bp' : p.a === '' ? 'em' : '';
+                return '<div class="pc' + (q ? ' sel' : '') + '"><div class="inf"><div class="pn">' + esc(p.n) + '</div><div class="pm"><span class="ab ' + ac + '">' + (p.a || '—') + '</span><span class="pt">€' + p.pr.toFixed(2) + '</span><span>' + esc(p.c) + '</span></div>' + (p.no ? '<div class="pno">' + esc(p.no) + '</div>' : '') + '</div><button class="eb" onclick="showPF(\'' + p.id + '\')">✏️</button><div class="qc">' + (q ? '<button class="qb r" onclick="rmC(\'' + p.id + '\')">−</button><span class="qv">' + q + '</span>' : '') + '<button class="qb a" onclick="addC(\'' + p.id + '\')">+</button></div></div>'
+            }).join('')
+        }
+        function aO(a) { return a === '' ? 9990 : a === 'BF' ? 9991 : a === 'BP' ? 9992 : parseInt(a) || 9989 }
+        function aL(a) { return a === 'BF' ? '🧊 Banco Frigo' : a === 'BP' ? '🐟 Banco Pesce' : a === '' ? '📍 Senza corsia' : '🛒 Corsia ' + a }
+        function rList() {
+            const el = $('lC'), it = Object.entries(cart).map(([id, d]) => { const p = P.find(x => x.id === id); return p ? { ...p, qty: d.qty } : null }).filter(Boolean);
+            if (!it.length) { el.innerHTML = '<div class="es"><div class="ei">✅</div><div class="et">Lista vuota</div><div style="font-size:13px">Aggiungi dal Catalogo!</div></div>'; return }
+            const tot = it.reduce((s, i) => s + i.pr * i.qty, 0), cnt = it.reduce((s, i) => s + i.qty, 0), g = {};
+            it.forEach(i => { if (!g[i.a]) g[i.a] = []; g[i.a].push(i) }); const al = Object.keys(g).sort((a, b) => aO(a) - aO(b));
+            let h = '<div class="ls"><div class="lsr"><div><div class="sv">' + cnt + '</div><div class="sl">Prodotti</div></div><div><div class="sv">€' + tot.toFixed(2) + '</div><div class="sl">Stima</div></div><div><div class="sv">' + al.length + '</div><div class="sl">Corsie</div></div></div></div>';
+            al.forEach(a => {
+                const ac = a === 'BF' ? 'bf' : a === 'BP' ? 'bp' : a === '' ? 'na' : '';
+                h += '<div class="as"><div class="ah"><span class="ahb ' + ac + '">' + (a || '—') + '</span>' + aL(a) + '</div>';
+                g[a].forEach(i => { h += '<div class="li"><button class="ck" onclick="comp(\'' + i.id + '\',this)">✓</button><div class="lin"><div class="lnm">' + esc(i.n) + '</div><div class="ld">' + esc(i.c) + (i.no ? ' · ' + esc(i.no) : '') + '</div></div>' + (i.qty > 1 ? '<span class="lq">×' + i.qty + '</span>' : '') + '</div>' }); h += '</div>'
+            });
+            h += '<button class="rb" onclick="rstC()">🗑️ Svuota Lista</button>'; el.innerHTML = h
+        }
+        function rStats() {
+            const el = $('stC'); if (!hist.length) { el.innerHTML = '<div class="es"><div class="ei">📊</div><div class="et">Nessuna statistica</div><div style="font-size:13px">Completa delle spese per vedere i dati!</div></div>'; return }
+            const allItems = hist.flatMap(t => t.items || []); const totSpent = hist.reduce((s, t) => s + (t.total || 0), 0); const totItems = allItems.reduce((s, i) => s + (i.qty || 1), 0); const avgTrip = totSpent / hist.length;
+            const catTot = {}; allItems.forEach(i => { catTot[i.c] = (catTot[i.c] || 0) + i.pr * (i.qty || 1) }); const catSorted = Object.entries(catTot).sort((a, b) => b[1] - a[1]); const maxCat = catSorted.length ? catSorted[0][1] : 1;
+            const prodCnt = {}; allItems.forEach(i => { prodCnt[i.n] = (prodCnt[i.n] || 0) + (i.qty || 1) }); const topProd = Object.entries(prodCnt).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const colors = ['#2E7D32', '#1565C0', '#FF6F00', '#C62828', '#7B1FA2', '#00838F', '#F9A825', '#5D4037', '#455A64', '#E91E63', '#009688', '#FF5722', '#3F51B5', '#795548', '#607D8B', '#4CAF50', '#9C27B0', '#FF9800', '#03A9F4', '#8BC34A'];
+            let h = '<div class="stcard"><h3>📈 Riepilogo Generale</h3><div class="st-big"><div><div class="sv">' + hist.length + '</div><div class="sl">Spese</div></div><div><div class="sv">€' + totSpent.toFixed(0) + '</div><div class="sl">Totale</div></div><div><div class="sv">€' + avgTrip.toFixed(0) + '</div><div class="sl">Media</div></div><div><div class="sv">' + totItems + '</div><div class="sl">Prodotti</div></div></div></div>';
+            h += '<div class="stcard"><h3>🏷️ Spesa per Categoria</h3>'; catSorted.forEach((c, i) => { const pct = Math.round(c[1] / maxCat * 100); const clr = colors[i % colors.length]; h += '<div class="st-bar-row"><div class="st-bar-label">' + esc(c[0]) + '</div><div class="st-bar-track"><div class="st-bar-fill" style="width:' + pct + '%;background:' + clr + '"></div></div><div class="st-bar-val">€' + c[1].toFixed(2) + '</div></div>' }); h += '</div>';
+            h += '<div class="stcard"><h3>🏆 Prodotti più Comprati</h3>'; if (topProd.length) { topProd.forEach((p, i) => { const rc = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''; h += '<div class="st-rank"><div class="st-rank-num ' + rc + '">' + (i + 1) + '</div><div class="st-rank-info"><div class="st-rank-name">' + esc(p[0]) + '</div></div><div class="st-rank-badge">×' + p[1] + '</div></div>' }) } else h += '<div class="st-empty">Nessun dato</div>'; h += '</div>';
+            h += '<div class="stcard"><h3>🧾 Ultime Spese</h3>'; const recent = hist.slice().reverse().slice(0, 15); recent.forEach(t => { const d = new Date(t.ts), day = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }), time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }), nc = (t.items || []).reduce((s, i) => s + (i.qty || 1), 0); h += '<div class="st-trip"><div class="st-trip-date"><div class="st-trip-day">' + day + '</div><div class="st-trip-time">' + time + '</div></div><div class="st-trip-info"><div class="st-trip-items">' + nc + ' prodotti</div></div><div class="st-trip-total">€' + (t.total || 0).toFixed(2) + '</div></div>' }); h += '</div>';
+            h += '<button class="clr-hist-btn" onclick="clrHist()">🗑️ Cancella tutto lo storico</button>'; el.innerHTML = h
+        }
+        function clrHist() { if (!confirm('Cancellare tutto lo storico?')) return; hist = []; sH_(); rStats(); toast('Storico cancellato') }
+        function goT(t) { cTab = t; $('cP').classList.toggle('active', t === 'catalog'); $('lP').classList.toggle('active', t === 'list'); $('paP').classList.toggle('active', t === 'pantry'); $('stP').classList.toggle('active', t === 'stats'); $('t1').classList.toggle('active', t === 'catalog'); $('t2').classList.toggle('active', t === 'list'); $('tPa').classList.toggle('active', t === 'pantry'); $('t3').classList.toggle('active', t === 'stats'); if (t === 'list') rList(); if (t === 'pantry') rPant(); if (t === 'stats') rStats() }
+        $('sI').addEventListener('input', e => { sQ = e.target.value; $('sC').classList.toggle('v', sQ.length > 0); rCat() });
+        function clrS() { sQ = ''; $('sI').value = ''; $('sC').classList.remove('v'); rCat() }
+        function showSh() { const u = location.origin + location.pathname + '#list=' + lid; $('sU').textContent = u; $('sM').classList.add('active') }
+        function cpSh() { navigator.clipboard.writeText(location.origin + location.pathname + '#list=' + lid).then(() => { toast('✅ Link copiato!'); cM('sM') }) }
+        function cM(id) { $(id).classList.remove('active') }
+        function showSt() { const c = gF(); if (c) $('fI').value = JSON.stringify(c, null, 2); $('sS').style.display = 'block'; $('cP').classList.remove('active'); $('lP').classList.remove('active'); $('stP').classList.remove('active') }
+        function hidSt() { $('sS').style.display = 'none'; if (cTab === 'catalog') $('cP').classList.add('active'); else if (cTab === 'list') $('lP').classList.add('active'); else $('stP').classList.add('active') }
+        function savFb() { try { const c = JSON.parse($('fI').value); if (!c.apiKey || !c.databaseURL) throw new Error('Incompleta'); localStorage.setItem('fbConf', JSON.stringify(c)); toast('✅ OK!'); hidSt(); location.reload() } catch (e) { toast('❌ ' + e.message) } }
+        function toast(m) { const t = $('tt'); t.textContent = m; t.classList.add('v'); setTimeout(() => t.classList.remove('v'), 2500) }
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML }
+        function init() {
+            const hF = iF(); uC(); const sI = localStorage.getItem('lid'), hI = hL(), has = sI || hI;
+            if (hF && has) {
+                lid = hI || sI; if (!location.hash.includes('list=')) location.hash = 'list=' + lid;
+                firebase.auth().signInAnonymously().then(() => { const uid = firebase.auth().currentUser.uid; db.ref('lists/' + lid + '/users/' + uid).once('value').then(s => { if (s.val()) { $('hT').textContent = s.val().name || 'Spesa'; liFb() } else shA() }) }).catch(() => shA())
             }
-            
-            if (aisleFilter) {
-                aisleFilter.innerHTML = '<option value="">Tutti i corridoi</option>' +
-                    aisles.map(a => `<option value="${a}">${a}</option>`).join('');
-            }
+            else if (!hF && sI && localStorage.getItem('uN')) { lid = sI; $('hT').textContent = localStorage.getItem('uN'); lLoc(); render() }
+            else shA()
         }
-        
-        function openProductModal(product = null, index = null) {
-            currentEditingProduct = index;
-            document.getElementById('modalTitle').textContent = product ? 'Modifica Prodotto' : 'Nuovo Prodotto';
-            document.getElementById('productName').value = product ? product.name : '';
-            document.getElementById('productAisle').value = product ? product.aisle || '' : '';
-            document.getElementById('productCategory').value = product ? product.category || '' : '';
-            document.getElementById('productPrice').value = product ? product.price || '' : '';
-            document.getElementById('productThreshold').value = product ? product.threshold || '' : '';
-            document.getElementById('productNotes').value = product ? product.notes || '' : '';
-            document.getElementById('productModal').style.display = 'block';
-        }
-        
-        function closeProductModal() {
-            document.getElementById('productModal').style.display = 'none';
-            currentEditingProduct = null;
-        }
-        
-        function saveProduct() {
-            const name = document.getElementById('productName').value.trim();
-            if (!name) {
-                alert('Il nome del prodotto è obbligatorio');
-                return;
-            }
-            
-            const product = {
-                name: name,
-                aisle: document.getElementById('productAisle').value.trim(),
-                category: document.getElementById('productCategory').value.trim(),
-                price: parseFloat(document.getElementById('productPrice').value) || 0,
-                threshold: parseInt(document.getElementById('productThreshold').value) || 0,
-                notes: document.getElementById('productNotes').value.trim()
-            };
-            
-            const catalog = getStoredData('catalog');
-            
-            if (currentEditingProduct !== null) {
-                catalog[currentEditingProduct] = product;
-            } else {
-                catalog.push(product);
-            }
-            
-            saveData('catalog', catalog);
-            closeProductModal();
-            renderCatalog();
-            populateFilters();
-            checkAutoRestock();
-        }
-        
-        function editProduct(index) {
-            const catalog = getStoredData('catalog');
-            openProductModal(catalog[index], index);
-        }
-        
-        function deleteProduct(index) {
-            if (!confirm('Vuoi davvero eliminare questo prodotto dal catalogo?')) return;
-            
-            const catalog = getStoredData('catalog');
-            catalog.splice(index, 1);
-            saveData('catalog', catalog);
-            renderCatalog();
-            populateFilters();
-        }
-        
-        function copyShareLink() {
-            const input = document.getElementById('shareLink');
-            input.select();
-            document.execCommand('copy');
-            alert('Link copiato! Condividilo con chi vuoi collaborare.');
-        }
-        
-        // Chiudi modal cliccando fuori
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
+        init(); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { });
     </script>
 </body>
+
 </html>
