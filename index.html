@@ -1135,7 +1135,7 @@
             } catch (e) { er.textContent = 'Errore: ' + e.message }
         }
         function doOut() { if (!confirm('Uscire?')) return;['lid', 'uN', 'lP', 'lPr', 'lCa', 'lPa', 'fbConf'].forEach(k => localStorage.removeItem(k)); location.hash = ''; location.reload() }
-        function liFb() { db.ref('lists/' + lid + '/products').on('value', s => { const d = s.val(); P = d ? Object.entries(d).map(([k, v]) => ({ id: k, ...v })) : []; render() }); db.ref('lists/' + lid + '/cart').on('value', s => { cart = s.val() || {}; render() }); db.ref('lists/' + lid + '/history').on('value', s => { hist = s.val() || []; if (cTab === 'stats') rStats() }); db.ref('lists/' + lid + '/pantry').on('value', s => { pant = s.val() || {}; if (cTab === 'pantry') rPant() }) }
+        function liFb() { let fbReady = 0; function fbChk() { if (++fbReady >= 3) chkAllTh() } db.ref('lists/' + lid + '/products').on('value', s => { const d = s.val(); P = d ? Object.entries(d).map(([k, v]) => ({ id: k, ...v })) : []; render(); fbChk() }); db.ref('lists/' + lid + '/cart').on('value', s => { cart = s.val() || {}; render(); fbChk() }); db.ref('lists/' + lid + '/history').on('value', s => { hist = s.val() || []; if (cTab === 'stats') rStats() }); db.ref('lists/' + lid + '/pantry').on('value', s => { pant = s.val() || {}; if (cTab === 'pantry') rPant(); fbChk() }) }
         function iLoc() { const pr = {}; DF.forEach((p, i) => { pr['p' + i] = p }); localStorage.setItem('lPr', JSON.stringify(pr)); localStorage.setItem('lCa', JSON.stringify({})) }
         function lLoc() { try { const p = JSON.parse(localStorage.getItem('lPr')); P = p ? Object.entries(p).map(([k, v]) => ({ id: k, ...v })) : []; cart = JSON.parse(localStorage.getItem('lCa')) || {}; hist = JSON.parse(localStorage.getItem('lHi')) || []; pant = JSON.parse(localStorage.getItem('lPa')) || {} } catch (e) { P = []; cart = {}; hist = []; pant = {} } }
         function sLoc() { const p = {}; P.forEach(x => { p[x.id] = { n: x.n, a: x.a, c: x.c, pr: x.pr, no: x.no, th: x.th } }); localStorage.setItem('lPr', JSON.stringify(p)); localStorage.setItem('lCa', JSON.stringify(cart)); localStorage.setItem('lPa', JSON.stringify(pant)) }
@@ -1185,7 +1185,7 @@
             const na = (ai === 'BF' || ai === 'BP') ? ai : ai.replace(/[^0-9]/g, ''), d = { n: nm, a: na, c: ct, pr: pr, no: nt, th: th };
             if (db && lid) { id ? db.ref('lists/' + lid + '/products/' + id).set(d) : db.ref('lists/' + lid + '/products').push(d) }
             else { if (id) { const i = P.findIndex(p => p.id === id); if (i >= 0) P[i] = { id, ...d } } else P.push({ id: 'p' + Date.now().toString(36), ...d }); sLoc(); render() }
-            cM('pM'); toast(id ? '✏️ Modificato' : '✅ Aggiunto')
+            cM('pM'); toast(id ? '✏️ Modificato' : '✅ Aggiunto'); if (id) chkTh(id)
         }
         function delP() {
             const id = $('pI').value; if (!id || !confirm('Eliminare?')) return;
@@ -1201,7 +1201,7 @@
             if (!f.length) { el.innerHTML = '<div class="es"><div class="ei">🔍</div><div class="et">Nessun risultato</div></div>'; return }
             el.innerHTML = f.map(p => {
                 const q = cart[p.id]?.qty || 0, ac = p.a === 'BF' ? 'bf' : p.a === 'BP' ? 'bp' : p.a === '' ? 'em' : '';
-                return '<div class="pc' + (q ? ' sel' : '') + '"><div class="inf"><div class="pn">' + esc(p.n) + '</div><div class="pm"><span class="ab ' + ac + '">' + (p.a || '—') + '</span><span class="pt">€' + p.pr.toFixed(2) + '</span><span>' + esc(p.c) + '</span></div>' + (p.no ? '<div class="pno">' + esc(p.no) + '</div>' : '') + '</div><button class="eb" onclick="showPF(\'' + p.id + '\')">✏️</button><div class="qc">' + (q ? '<button class="qb r" onclick="rmC(\'' + p.id + '\')">−</button><span class="qv">' + q + '</span>' : '') + '<button class="qb a" onclick="addC(\'' + p.id + '\')">+</button></div></div>'
+                return '<div class="pc' + (q ? ' sel' : '') + '"><div class="inf"><div class="pn">' + esc(p.n) + '</div><div class="pm"><span class="ab ' + ac + '">' + (p.a || '—') + '</span><span class="pt">€' + p.pr.toFixed(2) + '</span><span>' + esc(p.c) + '</span>' + (p.th && p.th > 0 ? '<span class="ab bf">Soglia: ' + p.th + '</span>' : '') + '</div>' + (p.no ? '<div class="pno">' + esc(p.no) + '</div>' : '') + '</div><button class="eb" onclick="showPF(\'' + p.id + '\')">✏️</button><div class="qc">' + (q ? '<button class="qb r" onclick="rmC(\'' + p.id + '\')">−</button><span class="qv">' + q + '</span>' : '') + '<button class="qb a" onclick="addC(\'' + p.id + '\')">+</button></div></div>'
             }).join('')
         }
         function aO(a) { return a === '' ? 9990 : a === 'BF' ? 9991 : a === 'BP' ? 9992 : parseInt(a) || 9989 }
@@ -1215,7 +1215,7 @@
             al.forEach(a => {
                 const ac = a === 'BF' ? 'bf' : a === 'BP' ? 'bp' : a === '' ? 'na' : '';
                 h += '<div class="as"><div class="ah"><span class="ahb ' + ac + '">' + (a || '—') + '</span>' + aL(a) + '</div>';
-                g[a].forEach(i => { h += '<div class="li"><button class="ck" onclick="comp(\'' + i.id + '\',this)">✓</button><div class="lin"><div class="lnm">' + esc(i.n) + '</div><div class="ld">' + esc(i.c) + (i.no ? ' · ' + esc(i.no) : '') + '</div></div>' + (i.qty > 1 ? '<span class="lq">×' + i.qty + '</span>' : '') + '</div>' }); h += '</div>'
+                g[a].forEach(i => { h += '<div class="li"><button class="ck" onclick="comp(\'' + i.id + '\',this)">✓</button><div class="lin"><div class="lnm">' + esc(i.n) + '</div><div class="ld">' + esc(i.c) + (i.no ? ' · ' + esc(i.no) : '') + '</div></div><div class="qc"><button class="qb r" onclick="rmC(\'' + i.id + '\')">−</button><span class="qv">' + i.qty + '</span><button class="qb a" onclick="addC(\'' + i.id + '\')">+</button></div></div>' }); h += '</div>'
             });
             h += '<button class="rb" onclick="rstC()">🗑️ Svuota Lista</button>'; el.innerHTML = h
         }
@@ -1249,7 +1249,7 @@
                 lid = hI || sI; if (!location.hash.includes('list=')) location.hash = 'list=' + lid;
                 firebase.auth().signInAnonymously().then(() => { const uid = firebase.auth().currentUser.uid; db.ref('lists/' + lid + '/users/' + uid).once('value').then(s => { if (s.val()) { $('hT').textContent = s.val().name || 'Spesa'; liFb() } else shA() }) }).catch(() => shA())
             }
-            else if (!hF && sI && localStorage.getItem('uN')) { lid = sI; $('hT').textContent = localStorage.getItem('uN'); lLoc(); render() }
+            else if (!hF && sI && localStorage.getItem('uN')) { lid = sI; $('hT').textContent = localStorage.getItem('uN'); lLoc(); render(); chkAllTh() }
             else shA()
         }
         init(); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { });
