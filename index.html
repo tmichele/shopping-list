@@ -1389,6 +1389,8 @@
                     logHistory([{ n: product.n, c: product.c, pr: product.pr, qty: qty }]);
                     if (!pantry[id]) pantry[id] = { qty: 0 };
                     pantry[id].qty += qty;
+                    pantry[id].lastModified = Date.now();
+                    pantry[id].lastModifiedBy = localStorage.getItem('uN');
                     savePantry();
                 }
                 delete cart[id];
@@ -1405,6 +1407,8 @@
                 if (product) {
                     if (!pantry[id]) pantry[id] = { qty: 0 };
                     pantry[id].qty += d.qty;
+                    pantry[id].lastModified = Date.now();
+                    pantry[id].lastModifiedBy = localStorage.getItem('uN');
                 }
                 return product ? { n: product.n, c: product.c, pr: product.pr, qty: d.qty } : null;
             }).filter(Boolean);
@@ -1456,6 +1460,8 @@
         function adjustPantry(id, delta) {
             if (!pantry[id]) pantry[id] = { qty: 0 };
             pantry[id].qty = Math.max(0, pantry[id].qty + delta);
+            pantry[id].lastModified = Date.now();
+            pantry[id].lastModifiedBy = localStorage.getItem('uN');
             savePantry();
             checkThreshold(id);
         }
@@ -1493,7 +1499,18 @@
                     h += '<div class="pc"' + lowStyle + '><div class="inf"><div class="pn">' + escapeHtml(p.n) + '</div><div class="pm">';
                     if (p.th && p.th > 0) h += '<span class="ab bf">Soglia: ' + p.th + '</span>';
                     if (isLow) h += '<span class="ab" style="background:var(--ob);color:var(--o)">⚠ Sotto soglia</span>';
-                    h += '</div></div>'
+                    h += '</div>';
+                    if (pantry[p.id]?.lastModified) {
+                        const date = new Date(pantry[p.id].lastModified);
+                        const dateStr = date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+                        const timeStr = date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                        const user = pantry[p.id].lastModifiedBy || '';
+                        h += '<div class="pm" style="margin-top:2px">'
+                            + '<span class="ab em">🕐 ' + dateStr + ' ' + timeStr + '</span>'
+                            + (user ? '<span class="ab em">👤 ' + escapeHtml(user) + '</span>' : '')
+                            + '</div>';
+                    }
+                    h += '</div>'
                         + '<div class="qc">'
                         + '<button class="qb r" onclick="adjustPantry(\'' + p.id + '\',-1)">−</button>'
                         + '<div class="qv">' + p.qty + '</div>'
