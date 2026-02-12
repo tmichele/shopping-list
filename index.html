@@ -332,6 +332,11 @@
             color: var(--gr)
         }
 
+        .ab.dp {
+            background: #E8F5E9;
+            color: #2E7D32
+        }
+
         .pt {
             color: var(--g);
             font-weight: 600
@@ -1220,7 +1225,7 @@
             al.forEach(a => {
                 const ac = a === 'BF' ? 'bf' : a === 'BP' ? 'bp' : a === '' ? 'na' : '';
                 h += '<div class="as"><div class="ah"><span class="ahb ' + ac + '">' + (a || '—') + '</span>' + aL(a) + '</div>';
-                g[a].forEach(i => { h += '<div class="li"><button class="ck" onclick="comp(\'' + i.id + '\',this)">✓</button><div class="lin"><div class="lnm">' + esc(i.n) + '</div><div class="ld">' + esc(i.c) + (i.no ? ' · ' + esc(i.no) : '') + '</div></div><div class="qc"><button class="qb r" onclick="rmC(\'' + i.id + '\')">−</button><span class="qv">' + i.qty + '</span><button class="qb a" onclick="addC(\'' + i.id + '\')">+</button></div></div>' }); h += '</div>'
+                g[a].forEach(i => { const pQty = pant[i.id]?.qty || 0; h += '<div class="li"><button class="ck" onclick="comp(\'' + i.id + '\',this)">✓</button><div class="lin"><div class="lnm">' + esc(i.n) + '</div><div class="ld">' + esc(i.c) + (i.no ? ' · ' + esc(i.no) : '') + '</div>' + (pQty > 0 ? '<div class="ld"><span class="ab dp">🏠 ' + pQty + ' in dispensa</span></div>' : '') + '</div><div class="qc"><button class="qb r" onclick="rmC(\'' + i.id + '\')">−</button><span class="qv">' + i.qty + '</span><button class="qb a" onclick="addC(\'' + i.id + '\')">+</button></div></div>' }); h += '</div>'
             });
             h += '<button class="rb" onclick="rstC()">🗑️ Svuota Lista</button>'; el.innerHTML = h
         }
