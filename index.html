@@ -1301,18 +1301,17 @@
         // === Sincronizzazione Firebase (listener realtime) ===
         function listenFirebase() {
             let fbReady = 0;
-            function onReady() { if (++fbReady === 3) checkAllThresholds() }
 
             db.ref('lists/' + listId + '/products').on('value', snap => {
                 const data = snap.val();
                 products = data ? Object.entries(data).map(([k, v]) => ({ id: k, ...v })) : [];
                 render();
-                onReady();
+                if (++fbReady >= 3) checkAllThresholds();
             });
             db.ref('lists/' + listId + '/cart').on('value', snap => {
                 cart = snap.val() || {};
                 render();
-                onReady();
+                ++fbReady;
             });
             db.ref('lists/' + listId + '/history').on('value', snap => {
                 history = snap.val() || [];
@@ -1321,7 +1320,7 @@
             db.ref('lists/' + listId + '/pantry').on('value', snap => {
                 pantry = snap.val() || {};
                 if (currentTab === 'pantry') renderPantry();
-                onReady();
+                if (++fbReady >= 3) checkAllThresholds();
             });
         }
 
