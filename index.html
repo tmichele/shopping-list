@@ -1299,7 +1299,7 @@
         // === Sincronizzazione Firebase (listener realtime) ===
         function listenFirebase() {
             let fbReady = 0;
-            function onReady() { if (++fbReady >= 3) checkAllThresholds() }
+            function onReady() { if (++fbReady === 3) checkAllThresholds() }
 
             db.ref('lists/' + listId + '/products').on('value', snap => {
                 const data = snap.val();
@@ -1367,16 +1367,36 @@
             else { localStorage.setItem('lPa', JSON.stringify(pantry)); render() }
         }
 
+        function saveCartItem(id) {
+            if (db && listId) db.ref('lists/' + listId + '/cart/' + id).set(cart[id]);
+            else { saveLocal(); render() }
+        }
+
+        function removeCartItem(id) {
+            if (db && listId) db.ref('lists/' + listId + '/cart/' + id).remove();
+            else { saveLocal(); render() }
+        }
+
+        function savePantryItem(id) {
+            if (db && listId) db.ref('lists/' + listId + '/pantry/' + id).set(pantry[id]);
+            else { localStorage.setItem('lPa', JSON.stringify(pantry)); render() }
+        }
+
         // === Gestione carrello (lista della spesa) ===
         function addToCart(id) {
             cart[id] = { qty: (cart[id]?.qty || 0) + 1 };
-            saveCart();
+            saveCartItem(id);
         }
 
         function removeFromCart(id) {
             if (!cart[id]) return;
-            cart[id].qty > 1 ? cart[id].qty-- : delete cart[id];
-            saveCart();
+            if (cart[id].qty > 1) {
+                cart[id].qty--;
+                saveCartItem(id);
+            } else {
+                delete cart[id];
+                removeCartItem(id);
+            }
         }
 
         function completeItem(id, el) {
@@ -1391,10 +1411,10 @@
                     pantry[id].qty += qty;
                     pantry[id].lastModified = Date.now();
                     pantry[id].lastModifiedBy = localStorage.getItem('uN');
-                    savePantry();
+                    savePantryItem(id);
                 }
                 delete cart[id];
-                saveCart();
+                removeCartItem(id);
                 checkThreshold(id);
             }, 300);
         }
@@ -1439,7 +1459,7 @@
             const qty = pantry[id]?.qty || 0;
             if (qty < product.th && !cart[id]) {
                 cart[id] = { qty: 1 };
-                saveCart();
+                saveCartItem(id);
                 toast('🔔 ' + product.n + ' aggiunto a carrello (sotto soglia)');
             }
         }
@@ -1462,7 +1482,7 @@
             pantry[id].qty = Math.max(0, pantry[id].qty + delta);
             pantry[id].lastModified = Date.now();
             pantry[id].lastModifiedBy = localStorage.getItem('uN');
-            savePantry();
+            savePantryItem(id);
             checkThreshold(id);
         }
         // === Rendering: Dispensa ===
@@ -1585,7 +1605,7 @@
 
             if (db && listId) {
                 db.ref('lists/' + listId + '/products/' + id).remove();
-                if (cart[id]) { delete cart[id]; saveCart() }
+                if (cart[id]) { delete cart[id]; removeCartItem(id) }
             } else {
                 products = products.filter(p => p.id !== id);
                 if (cart[id]) delete cart[id];
