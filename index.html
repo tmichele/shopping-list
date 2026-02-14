@@ -1463,10 +1463,10 @@
                     const qty = pantry[product.id]?.qty || 0;
                     if (qty < product.th && !cart[product.id]) {
                         cart[product.id] = { qty: 1 };
+                        saveCartItem(product.id);
                     }
                 }
             });
-            saveCart();
         }
 
         // === Gestione dispensa ===
