@@ -1530,6 +1530,15 @@
         // Raggruppa gli acquisti per "sessione di spesa": acquisti ravvicinati
         // nel tempo (entro SESSION_GAP_MS) appartengono alla stessa spesa.
         const SESSION_GAP_MS = 3 * 60 * 60 * 1000; // 3 ore
+
+        // Prezzo corrente di un item: preso dal catalogo (per nome), con
+        // fallback al prezzo salvato al momento dell'acquisto se il prodotto
+        // non esiste più.
+        function itemPrice(item) {
+            const p = products.find(x => x.n === item.n);
+            return p ? (p.pr || 0) : (item.pr || 0);
+        }
+
         function groupSessions(trips) {
             const sorted = trips.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
             const sessions = [];
@@ -1537,11 +1546,13 @@
                 const last = sessions[sessions.length - 1];
                 if (last && (t.ts || 0) - last.lastTs <= SESSION_GAP_MS) {
                     last.items.push(...(t.items || []));
-                    last.total += (t.total || 0);
                     last.lastTs = t.ts || last.lastTs;
                 } else {
-                    sessions.push({ ts: t.ts, lastTs: t.ts || 0, items: [...(t.items || [])], total: t.total || 0 });
+                    sessions.push({ ts: t.ts, lastTs: t.ts || 0, items: [...(t.items || [])] });
                 }
+            });
+            sessions.forEach(s => {
+                s.total = s.items.reduce((sum, i) => sum + itemPrice(i) * (i.qty || 1), 0);
             });
             return sessions;
         }
@@ -1857,13 +1868,13 @@
 
             const sessions = groupSessions(history);
             const allItems = history.flatMap(t => t.items || []);
-            const totalSpent = history.reduce((sum, t) => sum + (t.total || 0), 0);
+            const totalSpent = sessions.reduce((sum, s) => sum + (s.total || 0), 0);
             const totalItems = allItems.reduce((sum, i) => sum + (i.qty || 1), 0);
             const avgTrip = totalSpent / sessions.length;
 
-            // Spesa per categoria
+            // Spesa per categoria (prezzi correnti dal catalogo)
             const catTotals = {};
-            allItems.forEach(i => { catTotals[i.c] = (catTotals[i.c] || 0) + i.pr * (i.qty || 1) });
+            allItems.forEach(i => { catTotals[i.c] = (catTotals[i.c] || 0) + itemPrice(i) * (i.qty || 1) });
             const catSorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
             const maxCat = catSorted.length ? catSorted[0][1] : 1;
 
@@ -1874,8 +1885,49 @@
 
             const colors = ['#2E7D32', '#1565C0', '#FF6F00', '#C62828', '#7B1FA2', '#00838F', '#F9A825', '#5D4037', '#455A64', '#E91E63', '#009688', '#FF5722', '#3F51B5', '#795548', '#607D8B', '#4CAF50', '#9C27B0', '#FF9800', '#03A9F4', '#8BC34A'];
 
+            let h = '';
+
+            // Ultime spese
+            h += '<div class="stcard"><h3>🧾 Ultime Spese</h3>';
+            const recent = sessions.slice().reverse().slice(0, 15);
+            recent.forEach(trip => {
+                const key = String(trip.ts);
+                const d = new Date(trip.ts);
+                const day = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+                const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                const numItems = (trip.items || []).reduce((sum, i) => sum + (i.qty || 1), 0);
+                const real = actualCosts[key];
+                const expanded = expandedSessions.has(key);
+                const amount = real != null
+                    ? '<button class="st-amt-real" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">€' + real.toFixed(2) + '</button>'
+                    : '<button class="st-amt-add" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">＋ reale</button>';
+
+                h += '<div class="st-session"><div class="st-trip" onclick="toggleSession(\'' + key + '\')">'
+                    + '<div class="st-trip-date"><div class="st-trip-day">' + day + '</div><div class="st-trip-time">' + time + '</div></div>'
+                    + '<div class="st-trip-info"><div class="st-trip-items">' + numItems + ' prodotti</div></div>'
+                    + '<div class="st-trip-amounts"><div class="st-amt-calc">≈ €' + (trip.total || 0).toFixed(2) + '</div>' + amount + '</div>'
+                    + '<div class="st-caret">' + (expanded ? '▾' : '▸') + '</div></div>';
+
+                if (expanded) {
+                    const merged = {};
+                    (trip.items || []).forEach(i => {
+                        if (!merged[i.n]) merged[i.n] = { n: i.n, qty: 0, total: 0 };
+                        merged[i.n].qty += (i.qty || 1);
+                        merged[i.n].total += itemPrice(i) * (i.qty || 1);
+                    });
+                    const lines = Object.values(merged).sort((a, b) => a.n.localeCompare(b.n));
+                    h += '<div class="st-trip-detail">';
+                    h += lines.length
+                        ? lines.map(l => '<div class="st-detail-row"><span>' + escapeHtml(l.n) + ' <span class="q">×' + l.qty + '</span></span><span>€' + l.total.toFixed(2) + '</span></div>').join('')
+                        : '<div class="st-detail-empty">Nessun dettaglio</div>';
+                    h += '</div>';
+                }
+                h += '</div>';
+            });
+            h += '</div>';
+
             // Riepilogo generale
-            let h = '<div class="stcard"><h3>📈 Riepilogo Generale</h3><div class="st-big">'
+            h += '<div class="stcard"><h3>📈 Riepilogo Generale</h3><div class="st-big">'
                 + '<div><div class="sv">' + sessions.length + '</div><div class="sl">Spese</div></div>'
                 + '<div><div class="sv">€' + totalSpent.toFixed(0) + '</div><div class="sl">Totale</div></div>'
                 + '<div><div class="sv">€' + avgTrip.toFixed(0) + '</div><div class="sl">Media</div></div>'
@@ -1907,45 +1959,6 @@
             } else {
                 h += '<div class="st-empty">Nessun dato</div>';
             }
-            h += '</div>';
-
-            // Ultime spese
-            h += '<div class="stcard"><h3>🧾 Ultime Spese</h3>';
-            const recent = sessions.slice().reverse().slice(0, 15);
-            recent.forEach(trip => {
-                const key = String(trip.ts);
-                const d = new Date(trip.ts);
-                const day = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
-                const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-                const numItems = (trip.items || []).reduce((sum, i) => sum + (i.qty || 1), 0);
-                const real = actualCosts[key];
-                const expanded = expandedSessions.has(key);
-                const amount = real != null
-                    ? '<button class="st-amt-real" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">€' + real.toFixed(2) + '</button>'
-                    : '<button class="st-amt-add" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">＋ reale</button>';
-
-                h += '<div class="st-session"><div class="st-trip" onclick="toggleSession(\'' + key + '\')">'
-                    + '<div class="st-trip-date"><div class="st-trip-day">' + day + '</div><div class="st-trip-time">' + time + '</div></div>'
-                    + '<div class="st-trip-info"><div class="st-trip-items">' + numItems + ' prodotti</div></div>'
-                    + '<div class="st-trip-amounts"><div class="st-amt-calc">≈ €' + (trip.total || 0).toFixed(2) + '</div>' + amount + '</div>'
-                    + '<div class="st-caret">' + (expanded ? '▾' : '▸') + '</div></div>';
-
-                if (expanded) {
-                    const merged = {};
-                    (trip.items || []).forEach(i => {
-                        if (!merged[i.n]) merged[i.n] = { n: i.n, qty: 0, total: 0 };
-                        merged[i.n].qty += (i.qty || 1);
-                        merged[i.n].total += (i.pr || 0) * (i.qty || 1);
-                    });
-                    const lines = Object.values(merged).sort((a, b) => a.n.localeCompare(b.n));
-                    h += '<div class="st-trip-detail">';
-                    h += lines.length
-                        ? lines.map(l => '<div class="st-detail-row"><span>' + escapeHtml(l.n) + ' <span class="q">×' + l.qty + '</span></span><span>€' + l.total.toFixed(2) + '</span></div>').join('')
-                        : '<div class="st-detail-empty">Nessun dettaglio</div>';
-                    h += '</div>';
-                }
-                h += '</div>';
-            });
             h += '</div>';
 
             h += '<button class="clr-hist-btn" onclick="clearHistory()">🗑️ Cancella tutto lo storico</button>';
