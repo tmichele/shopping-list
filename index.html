@@ -861,6 +861,97 @@
             font-size: 12px
         }
 
+        .rc-status {
+            font-size: 13px;
+            color: var(--gr);
+            text-align: center;
+            padding: 10px 0
+        }
+
+        .rc-row {
+            border: 1px solid var(--grl);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px
+        }
+
+        .rc-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
+        }
+
+        .rc-det {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            word-break: break-word
+        }
+
+        .rc-conf {
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 9px;
+            color: #fff
+        }
+
+        .rc-conf.hi {
+            background: var(--g)
+        }
+
+        .rc-conf.mid {
+            background: var(--o)
+        }
+
+        .rc-conf.lo {
+            background: var(--gr)
+        }
+
+        .rc-sel {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid var(--grl);
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff
+        }
+
+        .rc-pr {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--gr)
+        }
+
+        .rc-price {
+            width: 80px;
+            padding: 6px 8px;
+            border: 2px solid var(--grl);
+            border-radius: 8px;
+            font-size: 13px;
+            margin-left: 4px
+        }
+
+        .rc-delta b.chg {
+            color: var(--g)
+        }
+
+        .rc-apply {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            color: #333
+        }
+
         .stcard {
             background: var(--w);
             border-radius: var(--rad);
@@ -1166,8 +1257,10 @@
     <div class="header">
         <h1>🛒 <span id="hT">Spesa</span></h1>
         <div class="header-actions"><span id="cn" class="obadge off">locale</span><button class="hbtn"
+                onclick="startReceiptScan()" title="Scansiona scontrino">🧾</button><button class="hbtn"
                 onclick="showShareModal()">📤</button><button class="hbtn" onclick="showSettings()">⚙️</button></div>
     </div>
+    <input type="file" id="rcF" accept="image/*" style="display:none" onchange="onReceiptFile(event)">
     <div id="cP" class="page active">
         <div class="sbox-wrap">
             <div class="sbox"><span>🔍</span><input type="text" id="sI" placeholder="Cerca prodotto..."
@@ -1236,6 +1329,14 @@
             style="color:var(--r)">🚪 Esci</button>
         <div class="sn" style="margin-top:16px;text-align:center;opacity:.5">v<span id="appV"></span></div>
     </div>
+    <div class="mo" id="rcM" onclick="if(event.target===this)closeModal('rcM')">
+        <div class="md">
+            <h2>🧾 Scansiona scontrino</h2>
+            <div id="rcStatus" class="rc-status"></div>
+            <div id="rcList"></div>
+            <div id="rcActions"></div>
+        </div>
+    </div>
     <div class="toast" id="tt"></div>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -1259,6 +1360,8 @@
         let listId = null;
         let isConnected = false;
         let authMode = 'create';
+        let receiptItems = [];
+        let tesseractPromise = null;
 
         // === Utilità ===
         function $(id) { return document.getElementById(id) }
@@ -2131,6 +2234,154 @@
 
         function closeModal(id) {
             $(id).classList.remove('active');
+        }
+
+        // === Scansione scontrino (OCR locale con Tesseract.js) ===
+        function loadTesseract() {
+            if (window.Tesseract) return Promise.resolve();
+            if (tesseractPromise) return tesseractPromise;
+            tesseractPromise = new Promise((res, rej) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                s.onload = () => res();
+                s.onerror = () => { tesseractPromise = null; rej(new Error('Impossibile caricare il motore OCR (serve rete la prima volta)')); };
+                document.head.appendChild(s);
+            });
+            return tesseractPromise;
+        }
+
+        function startReceiptScan() {
+            $('rcF').click();
+        }
+
+        function setReceiptStatus(html) {
+            $('rcStatus').innerHTML = html;
+            $('rcList').innerHTML = '';
+            $('rcActions').innerHTML = '<button class="mb s" onclick="closeModal(\'rcM\')">Chiudi</button>';
+        }
+
+        async function onReceiptFile(e) {
+            const file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            $('rcM').classList.add('active');
+            setReceiptStatus('📷 Preparazione OCR…');
+            try {
+                await loadTesseract();
+                setReceiptStatus('🔎 Lettura scontrino… 0%');
+                const { data } = await Tesseract.recognize(file, 'ita', {
+                    logger: m => { if (m.status === 'recognizing text') setReceiptStatus('🔎 Lettura scontrino… ' + Math.round(m.progress * 100) + '%'); }
+                });
+                const parsed = parseReceipt(data.text || '');
+                receiptItems = parsed.map(it => {
+                    const m = matchProduct(it.name);
+                    const matchId = (m.product && m.score >= 0.4) ? m.product.id : '';
+                    return { raw: it.raw, name: it.name, price: it.price, score: m.score, matchId: matchId, apply: !!(matchId && m.score >= 0.5) };
+                });
+                if (!receiptItems.length) { setReceiptStatus('😕 Nessun prodotto/prezzo riconosciuto. Riprova con una foto più nitida e dritta.'); return; }
+                renderReceiptReview();
+            } catch (err) {
+                setReceiptStatus('❌ ' + err.message);
+            }
+        }
+
+        // Estrae righe "nome ... prezzo" dal testo OCR
+        function parseReceipt(text) {
+            const priceRe = /(\d{1,4}[.,]\d{2})/g;
+            const skipRe = /(totale|subtotale|sub-tot|iva|resto|contant|carta|bancomat|importo|sconto|punti|cassa|scontrino|documento|^euro|pagament|saldo|n\.|art\.|operatore|grazie|arrivederci)/i;
+            const items = [];
+            text.split('\n').forEach(line => {
+                const l = line.trim();
+                if (l.length < 4) return;
+                const matches = l.match(priceRe);
+                if (!matches) return;
+                const price = parseFloat(matches[matches.length - 1].replace(',', '.'));
+                if (isNaN(price) || price <= 0 || price > 999) return;
+                let name = l.replace(priceRe, ' ')
+                    .replace(/\b\d+\s*[xX]\b/g, ' ')
+                    .replace(/[€*=]/g, ' ')
+                    .replace(/\b[A-Z]\b/g, ' ')
+                    .replace(/\s{2,}/g, ' ')
+                    .trim();
+                if (!/[a-zA-Z]{3,}/.test(name)) return;
+                if (skipRe.test(name) || skipRe.test(l)) return;
+                items.push({ raw: l, name: name, price: price });
+            });
+            return items;
+        }
+
+        function normStr(s) {
+            return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function diceCoeff(a, b) {
+            a = normStr(a); b = normStr(b);
+            if (!a || !b) return 0;
+            if (a === b) return 1;
+            const big = s => { const r = []; for (let i = 0; i < s.length - 1; i++) r.push(s.substr(i, 2)); return r; };
+            const ba = big(a), bb = big(b);
+            if (!ba.length || !bb.length) return 0;
+            const map = {};
+            ba.forEach(x => map[x] = (map[x] || 0) + 1);
+            let inter = 0;
+            bb.forEach(x => { if (map[x] > 0) { inter++; map[x]--; } });
+            return 2 * inter / (ba.length + bb.length);
+        }
+
+        function matchProduct(name) {
+            let best = null, bestScore = 0;
+            products.forEach(p => { const s = diceCoeff(name, p.n); if (s > bestScore) { bestScore = s; best = p; } });
+            return { product: best, score: bestScore };
+        }
+
+        function productOptions(selId) {
+            return products.slice().sort((a, b) => a.n.localeCompare(b.n))
+                .map(p => '<option value="' + p.id + '"' + (p.id === selId ? ' selected' : '') + '>' + escapeHtml(p.n) + ' (€' + (p.pr || 0).toFixed(2) + ')</option>').join('');
+        }
+
+        function setReceiptMatch(i, val) {
+            receiptItems[i].matchId = val;
+            receiptItems[i].apply = !!val;
+            renderReceiptReview();
+        }
+
+        function renderReceiptReview() {
+            const nApply = receiptItems.filter(x => x.apply && x.matchId).length;
+            $('rcStatus').innerHTML = '🧾 Trovati <b>' + receiptItems.length + '</b> articoli. Controlla match e prezzi, poi applica.';
+            $('rcList').innerHTML = receiptItems.map((it, i) => {
+                const p = it.matchId ? products.find(x => x.id === it.matchId) : null;
+                const changed = p && Math.abs((p.pr || 0) - it.price) > 0.001;
+                const conf = Math.round((it.score || 0) * 100);
+                const confClass = conf >= 60 ? 'hi' : conf >= 40 ? 'mid' : 'lo';
+                return '<div class="rc-row">'
+                    + '<div class="rc-top"><span class="rc-det">' + escapeHtml(it.raw) + '</span><span class="rc-conf ' + confClass + '">' + conf + '%</span></div>'
+                    + '<select class="rc-sel" onchange="setReceiptMatch(' + i + ',this.value)"><option value="">— ignora —</option>' + productOptions(it.matchId) + '</select>'
+                    + '<div class="rc-pr">'
+                    + '<label>Prezzo €<input type="number" step="0.01" class="rc-price" value="' + it.price.toFixed(2) + '" oninput="receiptItems[' + i + '].price=parseFloat(this.value)||0"></label>'
+                    + (p ? '<span class="rc-delta">cat. €' + (p.pr || 0).toFixed(2) + ' → <b' + (changed ? ' class="chg"' : '') + '>€' + it.price.toFixed(2) + '</b></span>' : '<span class="rc-delta">—</span>')
+                    + '<label class="rc-apply"><input type="checkbox" ' + (it.apply && it.matchId ? 'checked' : '') + ' ' + (it.matchId ? '' : 'disabled') + ' onchange="receiptItems[' + i + '].apply=this.checked"> aggiorna</label>'
+                    + '</div></div>';
+            }).join('');
+            $('rcActions').innerHTML = '<button class="mb" onclick="applyReceiptUpdates()">✅ Applica ' + nApply + ' aggiornamenti</button>'
+                + '<button class="mb s" onclick="closeModal(\'rcM\')">Annulla</button>';
+        }
+
+        function updateProductPrice(id, pr) {
+            if (db && listId) db.ref('lists/' + listId + '/products/' + id + '/pr').set(pr);
+            else { const p = products.find(x => x.id === id); if (p) { p.pr = pr; saveLocal(); render(); } }
+        }
+
+        function applyReceiptUpdates() {
+            let n = 0;
+            receiptItems.forEach(it => {
+                if (it.apply && it.matchId && it.price > 0) {
+                    const p = products.find(x => x.id === it.matchId);
+                    if (p && Math.abs((p.pr || 0) - it.price) > 0.001) { updateProductPrice(it.matchId, Math.round(it.price * 100) / 100); n++; }
+                }
+            });
+            closeModal('rcM');
+            toast(n ? '✅ ' + n + ' prezzi aggiornati' : 'Nessun prezzo modificato');
         }
 
         // === Impostazioni Firebase ===
