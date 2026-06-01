@@ -1487,6 +1487,25 @@
             saveHistory();
         }
 
+        // Raggruppa gli acquisti per "sessione di spesa": acquisti ravvicinati
+        // nel tempo (entro SESSION_GAP_MS) appartengono alla stessa spesa.
+        const SESSION_GAP_MS = 3 * 60 * 60 * 1000; // 3 ore
+        function groupSessions(trips) {
+            const sorted = trips.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+            const sessions = [];
+            sorted.forEach(t => {
+                const last = sessions[sessions.length - 1];
+                if (last && (t.ts || 0) - last.lastTs <= SESSION_GAP_MS) {
+                    last.items.push(...(t.items || []));
+                    last.total += (t.total || 0);
+                    last.lastTs = t.ts || last.lastTs;
+                } else {
+                    sessions.push({ ts: t.ts, lastTs: t.ts || 0, items: [...(t.items || [])], total: t.total || 0 });
+                }
+            });
+            return sessions;
+        }
+
         // === Soglie dispensa (auto-restock) ===
         function checkThreshold(id) {
             const product = products.find(x => x.id === id);
@@ -1796,10 +1815,11 @@
                 return;
             }
 
+            const sessions = groupSessions(history);
             const allItems = history.flatMap(t => t.items || []);
             const totalSpent = history.reduce((sum, t) => sum + (t.total || 0), 0);
             const totalItems = allItems.reduce((sum, i) => sum + (i.qty || 1), 0);
-            const avgTrip = totalSpent / history.length;
+            const avgTrip = totalSpent / sessions.length;
 
             // Spesa per categoria
             const catTotals = {};
@@ -1816,7 +1836,7 @@
 
             // Riepilogo generale
             let h = '<div class="stcard"><h3>📈 Riepilogo Generale</h3><div class="st-big">'
-                + '<div><div class="sv">' + history.length + '</div><div class="sl">Spese</div></div>'
+                + '<div><div class="sv">' + sessions.length + '</div><div class="sl">Spese</div></div>'
                 + '<div><div class="sv">€' + totalSpent.toFixed(0) + '</div><div class="sl">Totale</div></div>'
                 + '<div><div class="sv">€' + avgTrip.toFixed(0) + '</div><div class="sl">Media</div></div>'
                 + '<div><div class="sv">' + totalItems + '</div><div class="sl">Prodotti</div></div>'
@@ -1851,7 +1871,7 @@
 
             // Ultime spese
             h += '<div class="stcard"><h3>🧾 Ultime Spese</h3>';
-            const recent = history.slice().reverse().slice(0, 15);
+            const recent = sessions.slice().reverse().slice(0, 15);
             recent.forEach(trip => {
                 const d = new Date(trip.ts);
                 const day = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
