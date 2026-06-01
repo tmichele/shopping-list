@@ -861,6 +861,23 @@
             font-size: 12px
         }
 
+        .adv-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.35;
+            cursor: pointer
+        }
+
+        .adv-row input {
+            margin-top: 2px;
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px
+        }
+
         .rc-status {
             font-size: 13px;
             color: var(--gr);
@@ -1256,8 +1273,8 @@
     </div>
     <div class="header">
         <h1>🛒 <span id="hT">Spesa</span></h1>
-        <div class="header-actions"><span id="cn" class="obadge off">locale</span><button class="hbtn"
-                onclick="startReceiptScan()" title="Scansiona scontrino">🧾</button><button class="hbtn"
+        <div class="header-actions"><span id="cn" class="obadge off">locale</span><button class="hbtn" id="rcBtn"
+                style="display:none" onclick="startReceiptScan()" title="Scansiona scontrino">🧾</button><button class="hbtn"
                 onclick="showShareModal()">📤</button><button class="hbtn" onclick="showSettings()">⚙️</button></div>
     </div>
     <input type="file" id="rcF" accept="image/*" style="display:none" onchange="onReceiptFile(event)">
@@ -1322,6 +1339,9 @@
         <p>🛒 Corsie per fila (layout del supermercato, per l'ordinamento a serpentina della Lista):</p>
         <input type="number" id="aColsI" class="si" min="1" max="30" placeholder="2"><button class="sb"
             onclick="saveAisleCols()">💾 Salva corsie</button>
+        <p style="margin-top:18px">🧪 Funzionalità avanzate:</p>
+        <label class="adv-row"><input type="checkbox" id="advI" onchange="toggleAdvFeatures(this.checked)"> 🧾 Scansiona
+            scontrino — OCR locale + aggiornamento prezzi al catalogo</label>
         <p style="margin-top:18px">☁️ Configurazione Firebase (vedi README):</p><textarea id="fI" class="si" rows="7"
             placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea><button class="sb" onclick="saveFirebaseConfig()">💾
             Salva</button><button class="sb sk" onclick="hideSettings()">Annulla</button>
@@ -1362,6 +1382,7 @@
         let authMode = 'create';
         let receiptItems = [];
         let tesseractPromise = null;
+        let advFeatures = localStorage.getItem('advFeat') === '1';
 
         // === Utilità ===
         function $(id) { return document.getElementById(id) }
@@ -2250,7 +2271,20 @@
             return tesseractPromise;
         }
 
+        // Mostra/nasconde gli elementi UI delle funzionalità avanzate
+        function applyAdvFeatures() {
+            $('rcBtn').style.display = advFeatures ? '' : 'none';
+        }
+
+        function toggleAdvFeatures(on) {
+            advFeatures = !!on;
+            localStorage.setItem('advFeat', advFeatures ? '1' : '0');
+            applyAdvFeatures();
+            toast(advFeatures ? '🧪 Funzionalità avanzate attive' : 'Funzionalità avanzate disattivate');
+        }
+
         function startReceiptScan() {
+            if (!advFeatures) return;
             $('rcF').click();
         }
 
@@ -2389,6 +2423,7 @@
             const config = getFirebaseConfig();
             if (config) $('fI').value = JSON.stringify(config, null, 2);
             $('aColsI').value = aisleCols;
+            $('advI').checked = advFeatures;
             $('sS').style.display = 'block';
             $('appV').textContent = APP_VERSION;
             $('cP').classList.remove('active');
@@ -2429,6 +2464,7 @@
         function init() {
             const hasFirebase = initFirebase();
             updateConnectionBadge();
+            applyAdvFeatures();
 
             const savedListId = localStorage.getItem('lid');
             const hashListId = getHashListId();
