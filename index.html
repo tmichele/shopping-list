@@ -1833,8 +1833,21 @@
         }
 
         // === Rendering: Lista della spesa ===
+        // Layout del supermercato: corsie disposte a file parallele di
+        // AISLE_COLS corsie ciascuna (1-2, 3-4, 5-6...). Per minimizzare lo
+        // zig-zag le si percorre a serpentina: fila pari da sinistra a destra,
+        // fila dispari da destra a sinistra (es. 1,2,3,4 -> 1,2,4,3).
+        const AISLE_COLS = 2;
         function aisleOrder(aisle) {
-            return aisle === '' ? 9990 : aisle === 'BF' ? 9991 : aisle === 'BP' ? 9992 : parseInt(aisle) || 9989;
+            if (aisle === '') return 9990;
+            if (aisle === 'BF') return 9991;
+            if (aisle === 'BP') return 9992;
+            const n = parseInt(aisle);
+            if (isNaN(n)) return 9989;
+            if (n < 1) return n - 1;
+            const row = Math.floor((n - 1) / AISLE_COLS);
+            const col = (n - 1) % AISLE_COLS;
+            return row * AISLE_COLS + (row % 2 === 0 ? col : (AISLE_COLS - 1 - col));
         }
 
         function aisleLabel(aisle) {
