@@ -994,16 +994,85 @@
             border-radius: 10px
         }
 
+        .st-session {
+            border-bottom: 1px solid var(--grl)
+        }
+
+        .st-session:last-child {
+            border: none
+        }
+
         .st-trip {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 10px 0;
-            border-bottom: 1px solid var(--grl)
+            cursor: pointer
         }
 
-        .st-trip:last-child {
-            border: none
+        .st-trip-amounts {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            min-width: 86px
+        }
+
+        .st-amt-calc {
+            font-size: 11px;
+            color: var(--gr)
+        }
+
+        .st-amt-real {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--g);
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer
+        }
+
+        .st-amt-add {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--o);
+            background: var(--ob);
+            border: none;
+            padding: 4px 9px;
+            border-radius: 8px;
+            cursor: pointer
+        }
+
+        .st-caret {
+            font-size: 11px;
+            color: var(--gr);
+            width: 12px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .st-trip-detail {
+            padding: 2px 0 10px 80px
+        }
+
+        .st-detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12px;
+            padding: 3px 0;
+            color: #444
+        }
+
+        .st-detail-row .q {
+            color: var(--gr);
+            font-weight: 600
+        }
+
+        .st-detail-empty {
+            font-size: 12px;
+            color: var(--gr)
         }
 
         .st-trip-date {
@@ -1176,6 +1245,8 @@
         let cart = {};
         let history = [];
         let pantry = {};
+        let actualCosts = {};
+        let expandedSessions = new Set();
         let currentTab = 'catalog';
         let currentCategory = 'Tutti';
         let searchQuery = '';
@@ -1340,7 +1411,7 @@
 
         function doLogout() {
             if (!confirm('Uscire?')) return;
-            ['lid', 'uN', 'lP', 'lPr', 'lCa', 'lPa', 'fbConf'].forEach(k => localStorage.removeItem(k));
+            ['lid', 'uN', 'lP', 'lPr', 'lCa', 'lPa', 'lAc', 'fbConf'].forEach(k => localStorage.removeItem(k));
             location.hash = '';
             location.reload();
         }
@@ -1369,6 +1440,10 @@
                 if (currentTab === 'pantry') renderPantry();
                 if (++fbReady >= 3) checkAllThresholds();
             });
+            db.ref('lists/' + listId + '/actualCosts').on('value', snap => {
+                actualCosts = snap.val() || {};
+                if (currentTab === 'stats') renderStats();
+            });
         }
 
         // === Storage locale ===
@@ -1386,8 +1461,9 @@
                 cart = JSON.parse(localStorage.getItem('lCa')) || {};
                 history = JSON.parse(localStorage.getItem('lHi')) || [];
                 pantry = JSON.parse(localStorage.getItem('lPa')) || {};
+                actualCosts = JSON.parse(localStorage.getItem('lAc')) || {};
             } catch (e) {
-                products = []; cart = {}; history = []; pantry = {};
+                products = []; cart = {}; history = []; pantry = {}; actualCosts = {};
             }
         }
 
@@ -1403,6 +1479,11 @@
         function saveHistory() {
             if (db && listId) db.ref('lists/' + listId + '/history').set(history);
             else localStorage.setItem('lHi', JSON.stringify(history));
+        }
+
+        function saveActualCosts() {
+            if (db && listId) db.ref('lists/' + listId + '/actualCosts').set(actualCosts);
+            else localStorage.setItem('lAc', JSON.stringify(actualCosts));
         }
 
         function saveCart() {
@@ -1873,14 +1954,38 @@
             h += '<div class="stcard"><h3>🧾 Ultime Spese</h3>';
             const recent = sessions.slice().reverse().slice(0, 15);
             recent.forEach(trip => {
+                const key = String(trip.ts);
                 const d = new Date(trip.ts);
                 const day = d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
                 const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                 const numItems = (trip.items || []).reduce((sum, i) => sum + (i.qty || 1), 0);
-                h += '<div class="st-trip">'
+                const real = actualCosts[key];
+                const expanded = expandedSessions.has(key);
+                const amount = real != null
+                    ? '<button class="st-amt-real" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">€' + real.toFixed(2) + '</button>'
+                    : '<button class="st-amt-add" onclick="event.stopPropagation();editActualCost(\'' + key + '\')">＋ reale</button>';
+
+                h += '<div class="st-session"><div class="st-trip" onclick="toggleSession(\'' + key + '\')">'
                     + '<div class="st-trip-date"><div class="st-trip-day">' + day + '</div><div class="st-trip-time">' + time + '</div></div>'
                     + '<div class="st-trip-info"><div class="st-trip-items">' + numItems + ' prodotti</div></div>'
-                    + '<div class="st-trip-total">€' + (trip.total || 0).toFixed(2) + '</div></div>';
+                    + '<div class="st-trip-amounts"><div class="st-amt-calc">≈ €' + (trip.total || 0).toFixed(2) + '</div>' + amount + '</div>'
+                    + '<div class="st-caret">' + (expanded ? '▾' : '▸') + '</div></div>';
+
+                if (expanded) {
+                    const merged = {};
+                    (trip.items || []).forEach(i => {
+                        if (!merged[i.n]) merged[i.n] = { n: i.n, qty: 0, total: 0 };
+                        merged[i.n].qty += (i.qty || 1);
+                        merged[i.n].total += (i.pr || 0) * (i.qty || 1);
+                    });
+                    const lines = Object.values(merged).sort((a, b) => a.n.localeCompare(b.n));
+                    h += '<div class="st-trip-detail">';
+                    h += lines.length
+                        ? lines.map(l => '<div class="st-detail-row"><span>' + escapeHtml(l.n) + ' <span class="q">×' + l.qty + '</span></span><span>€' + l.total.toFixed(2) + '</span></div>').join('')
+                        : '<div class="st-detail-empty">Nessun dettaglio</div>';
+                    h += '</div>';
+                }
+                h += '</div>';
             });
             h += '</div>';
 
@@ -1891,9 +1996,36 @@
         function clearHistory() {
             if (!confirm('Cancellare tutto lo storico?')) return;
             history = [];
+            actualCosts = {};
+            expandedSessions.clear();
             saveHistory();
+            saveActualCosts();
             renderStats();
             toast('Storico cancellato');
+        }
+
+        // Espande/comprime una sessione di spesa per mostrarne i prodotti
+        function toggleSession(key) {
+            if (expandedSessions.has(key)) expandedSessions.delete(key);
+            else expandedSessions.add(key);
+            renderStats();
+        }
+
+        // Inserisce/modifica il costo reale pagato per una sessione di spesa
+        function editActualCost(key) {
+            const cur = actualCosts[key];
+            const input = prompt('Costo reale della spesa (€):', cur != null ? cur : '');
+            if (input === null) return;
+            const v = input.trim().replace(',', '.');
+            if (v === '') {
+                delete actualCosts[key];
+            } else {
+                const n = parseFloat(v);
+                if (isNaN(n) || n < 0) { toast('❌ Importo non valido'); return; }
+                actualCosts[key] = Math.round(n * 100) / 100;
+            }
+            saveActualCosts();
+            renderStats();
         }
 
         // === Navigazione tab ===
