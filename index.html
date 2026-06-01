@@ -1225,8 +1225,11 @@
         </div>
     </div>
     <div id="sS" class="ss" style="display:none">
-        <h2>⚙️ Firebase</h2>
-        <p>Incolla la configurazione (vedi README):</p><textarea id="fI" class="si" rows="7"
+        <h2>⚙️ Impostazioni</h2>
+        <p>🛒 Corsie per fila (layout del supermercato, per l'ordinamento a serpentina della Lista):</p>
+        <input type="number" id="aColsI" class="si" min="1" max="30" placeholder="2"><button class="sb"
+            onclick="saveAisleCols()">💾 Salva corsie</button>
+        <p style="margin-top:18px">☁️ Configurazione Firebase (vedi README):</p><textarea id="fI" class="si" rows="7"
             placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea><button class="sb" onclick="saveFirebaseConfig()">💾
             Salva</button><button class="sb sk" onclick="hideSettings()">Annulla</button>
         <div class="sn">💡 Senza Firebase = solo locale</div><br><button class="sb sk" onclick="doLogout()"
@@ -1833,8 +1836,22 @@
         }
 
         // === Rendering: Lista della spesa ===
+        // Layout del supermercato: corsie disposte a file parallele di
+        // aisleCols corsie ciascuna (1-2, 3-4, 5-6...). Per minimizzare lo
+        // zig-zag le si percorre a serpentina: fila pari da sinistra a destra,
+        // fila dispari da destra a sinistra (es. 1,2,3,4 -> 1,2,4,3).
+        // Il numero di corsie per fila è configurabile dalle Impostazioni.
+        let aisleCols = parseInt(localStorage.getItem('aCols')) || 2;
         function aisleOrder(aisle) {
-            return aisle === '' ? 9990 : aisle === 'BF' ? 9991 : aisle === 'BP' ? 9992 : parseInt(aisle) || 9989;
+            if (aisle === '') return 9990;
+            if (aisle === 'BF') return 9991;
+            if (aisle === 'BP') return 9992;
+            const n = parseInt(aisle);
+            if (isNaN(n)) return 9989;
+            if (n < 1) return n - 1;
+            const row = Math.floor((n - 1) / aisleCols);
+            const col = (n - 1) % aisleCols;
+            return row * aisleCols + (row % 2 === 0 ? col : (aisleCols - 1 - col));
         }
 
         function aisleLabel(aisle) {
@@ -2120,6 +2137,7 @@
         function showSettings() {
             const config = getFirebaseConfig();
             if (config) $('fI').value = JSON.stringify(config, null, 2);
+            $('aColsI').value = aisleCols;
             $('sS').style.display = 'block';
             $('appV').textContent = APP_VERSION;
             $('cP').classList.remove('active');
@@ -2132,6 +2150,15 @@
             if (currentTab === 'catalog') $('cP').classList.add('active');
             else if (currentTab === 'list') $('lP').classList.add('active');
             else $('stP').classList.add('active');
+        }
+
+        function saveAisleCols() {
+            const n = parseInt($('aColsI').value);
+            if (isNaN(n) || n < 1 || n > 30) { toast('❌ Valore tra 1 e 30'); return }
+            aisleCols = n;
+            localStorage.setItem('aCols', String(n));
+            if (currentTab === 'list') renderList();
+            toast('✅ Corsie per fila: ' + n);
         }
 
         function saveFirebaseConfig() {
