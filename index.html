@@ -1143,7 +1143,7 @@
             <h2 id="pT">Nuovo Prodotto</h2><input type="hidden" id="pI">
             <div class="fg"><label>Nome</label><input type="text" id="fN" placeholder="es. Pasta Barilla"></div>
             <div class="fr">
-                <div class="fg"><label>Corsia</label><input type="text" id="fA" placeholder="5, BF, BP"></div>
+                <div class="fg"><label>Corsia</label><input type="text" id="fA" placeholder="5, BF, BP, SF…"></div>
                 <div class="fg"><label>Prezzo €</label><input type="number" id="fP" step="0.10" placeholder="2.50">
                 </div>
             </div>
@@ -1614,7 +1614,7 @@
             if (!name) { toast('❌ Nome!'); return }
             if (!category) { toast('❌ Categoria!'); return }
 
-            const aisle = (aisleInput === 'BF' || aisleInput === 'BP') ? aisleInput : aisleInput.replace(/[^0-9]/g, '');
+            const aisle = aisleInput.replace(/[^0-9A-Z]/g, '');
             const data = { n: name, a: aisle, c: category, pr: price, no: notes, th: threshold };
 
             if (db && listId) {
