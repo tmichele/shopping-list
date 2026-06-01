@@ -1494,7 +1494,7 @@
 
             setTimeout(() => {
                 if (product) {
-                    logHistory([{ n: product.n, c: product.c, pr: product.pr, qty: qty }]);
+                    logHistory([{ id: product.id, n: product.n, c: product.c, pr: product.pr, qty: qty }]);
                     if (!pantry[id]) pantry[id] = { qty: 0 };
                     pantry[id].qty += qty;
                     pantry[id].lastModified = Date.now();
@@ -1535,7 +1535,7 @@
         // fallback al prezzo salvato al momento dell'acquisto se il prodotto
         // non esiste più.
         function itemPrice(item) {
-            const p = products.find(x => x.n === item.n);
+            const p = (item.id && products.find(x => x.id === item.id)) || products.find(x => x.n === item.n);
             return p ? (p.pr || 0) : (item.pr || 0);
         }
 
