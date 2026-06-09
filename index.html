@@ -1415,7 +1415,7 @@
                 class="tab-icon">📦</span>Catalogo</button><button class="tab" onclick="goToTab('list')" id="t2"><span
                 class="tab-icon">📋</span>Lista<span class="tbadge" id="lB"></span></button><button class="tab"
             onclick="goToTab('pantry')" id="tPa"><span class="tab-icon">🏠</span>Dispensa</button><button class="tab"
-            onclick="goToTab('suggest')" id="t4"><span class="tab-icon">💡</span>Suggeriti</button><button class="tab"
+            onclick="goToTab('suggest')" id="t4" style="display:none"><span class="tab-icon">💡</span>Suggeriti</button><button class="tab"
             onclick="goToTab('stats')" id="t3"><span class="tab-icon">📊</span>Stats</button></div>
     <div class="mo" id="sM" onclick="if(event.target===this)closeModal('sM')">
         <div class="md">
@@ -1450,6 +1450,8 @@
         <p style="margin-top:18px">🧪 Funzionalità avanzate:</p>
         <label class="adv-row"><input type="checkbox" id="advI" onchange="toggleAdvFeatures(this.checked)"> 🧾 Scansiona
             scontrino — OCR locale + aggiornamento prezzi al catalogo</label>
+        <label class="adv-row"><input type="checkbox" id="sugI" onchange="toggleSuggestTab(this.checked)"> 💡 Tab
+            Suggeriti — consigli di riacquisto in base alla frequenza di acquisto</label>
         <p style="margin-top:18px">☁️ Configurazione Firebase (vedi README):</p><textarea id="fI" class="si" rows="7"
             placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea><button class="sb" onclick="saveFirebaseConfig()">💾
             Salva</button><button class="sb sk" onclick="hideSettings()">Annulla</button>
@@ -1491,6 +1493,7 @@
         let receiptItems = [];
         let tesseractPromise = null;
         let advFeatures = localStorage.getItem('advFeat') === '1';
+        let suggestTab = localStorage.getItem('suggestTab') === '1';
 
         // === Utilità ===
         function $(id) { return document.getElementById(id) }
@@ -2531,6 +2534,20 @@
             toast(advFeatures ? '🧪 Funzionalità avanzate attive' : 'Funzionalità avanzate disattivate');
         }
 
+        // Mostra/nasconde il tab Suggeriti (disattivato di default)
+        function applySuggestTab() {
+            $('t4').style.display = suggestTab ? '' : 'none';
+            // Se il tab viene nascosto mentre è attivo, torna al Catalogo
+            if (!suggestTab && currentTab === 'suggest') goToTab('catalog');
+        }
+
+        function toggleSuggestTab(on) {
+            suggestTab = !!on;
+            localStorage.setItem('suggestTab', suggestTab ? '1' : '0');
+            applySuggestTab();
+            toast(suggestTab ? '💡 Tab Suggeriti attivo' : 'Tab Suggeriti nascosto');
+        }
+
         function startReceiptScan() {
             if (!advFeatures) return;
             $('rcF').click();
@@ -2672,6 +2689,7 @@
             if (config) $('fI').value = JSON.stringify(config, null, 2);
             $('aColsI').value = aisleCols;
             $('advI').checked = advFeatures;
+            $('sugI').checked = suggestTab;
             $('sS').style.display = 'block';
             $('appV').textContent = APP_VERSION;
             $('cP').classList.remove('active');
@@ -2713,6 +2731,7 @@
             const hasFirebase = initFirebase();
             updateConnectionBadge();
             applyAdvFeatures();
+            applySuggestTab();
 
             const savedListId = localStorage.getItem('lid');
             const hashListId = getHashListId();
