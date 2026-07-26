@@ -1023,20 +1023,23 @@
             padding: 1px 5px
         }
 
-        .amap-files {
+        /* Griglia: colonne (Est→Ovest) di corsie in fila lungo Sud→Nord.
+           La colonna 1-2 è a Est; dentro la colonna la corsia 1 (Sud) e la 2 (Nord)
+           sono separate da uno spazio (corridoio trasversale). */
+        .amap-grid {
             display: flex;
-            flex-direction: row;
-            justify-content: flex-end;  /* coppia 1-2 accostata al lato Est (destra) */
-            align-items: flex-end;      /* corsie appoggiate a Sud (basso) */
-            gap: 18px;                  /* corridoio tra le coppie (Est-Ovest) */
+            flex-direction: column;     /* dall'alto: Nord → basso: Sud */
+            align-items: flex-end;      /* colonna 1-2 accostata al lato Est (destra) */
+            gap: 16px;                  /* spazio tra corsie in fila (corridoio trasversale) */
             min-width: min-content
         }
 
-        .amap-pair {
+        .amap-gridrow {
             display: flex;
             flex-direction: row;
             align-items: flex-end;
-            gap: 0                      /* le corsie della stessa coppia sono accostate (attaccate) */
+            justify-content: flex-end;
+            gap: 14px                   /* corridoi principali tra le colonne (Est-Ovest) */
         }
 
         .amap-aisle {
@@ -3067,8 +3070,9 @@
         function renderAisleMap() {
             const cols = Math.max(1, parseInt($('aColsI').value) || aisleCols);
             const present = new Set(products.map(p => parseInt(p.a)).filter(n => !isNaN(n) && n >= 1));
+            const perCol = cols;                              // corsie in fila per colonna (Sud→Nord)
             const maxN = present.size ? Math.max(...present) : 8; // senza catalogo: layout dimostrativo 1..8
-            const files = Math.ceil(maxN / cols);
+            const numCols = Math.ceil(maxN / perCol);         // numero di colonne (Est→Ovest)
 
             const SECT = ['Inizio', 'Centro', 'Fine'];
 
@@ -3076,18 +3080,18 @@
             h += '<div class="amap-store">';
             h += '<span class="amap-compass n">N</span><span class="amap-compass s">S</span>'
                 + '<span class="amap-compass e">E</span><span class="amap-compass o">O</span>';
-            h += '<div class="amap-files">';
-            // Corsie verticali affiancate: la coppia 1-2 è accostata al lato Est (destra),
-            // le coppie successive (3-4, 5-6…) proseguono verso Ovest. Rendo prima la coppia
-            // più a Ovest (numeri più alti, a sinistra) e per ultima la 1-2 (a destra).
-            for (let f = files - 1; f >= 0; f--) {
-                h += '<div class="amap-pair">';
-                for (let vc = 0; vc < cols; vc++) {
-                    const n = f * cols + (cols - vc);    // dentro la coppia: Ovest→Est = n decrescente (1 a Est)
+            h += '<div class="amap-grid">';
+            // Griglia: colonna c (c=0 = Est) contiene le corsie c*perCol+1 (Sud) .. in fila
+            // verso Nord. Rendo dal Nord (riga in alto) al Sud (riga in basso), e da Ovest
+            // (colonne più alte, a sinistra) a Est (colonna 1-2, a destra).
+            for (let r = perCol - 1; r >= 0; r--) {           // r=perCol-1 Nord (alto) → r=0 Sud (basso)
+                h += '<div class="amap-gridrow">';
+                for (let c = numCols - 1; c >= 0; c--) {      // c=numCols-1 Ovest (sx) → c=0 Est (dx)
+                    const n = c * perCol + r + 1;
                     if (n > maxN) { h += '<span class="amap-empty"></span>'; continue; }
-                    // Percorso a serpentina: corsie dispari si salgono (Inizio a Sud), pari si
-                    // scendono (Inizio a Nord). La corsia 1 parte dall'ingresso a Sud-Est.
-                    const inizioBottom = (n - 1) % 2 === 0;
+                    // Serpentine: colonne pari (0,2,…) si salgono (Inizio a Sud), dispari si
+                    // scendono (Inizio a Nord). Coerente con l'ordinamento reale della Lista.
+                    const inizioBottom = c % 2 === 0;
                     const state = !present.size ? '' : (present.has(n) ? ' on' : ' off');
                     let sec = '';
                     for (let k = 0; k < 3; k++) {
@@ -3103,8 +3107,8 @@
             h += '</div>';
             h += '<div class="amap-legend">'
                 + (present.size ? '🟢 corsia a catalogo · grigia = non usata<br>' : 'Layout dimostrativo (catalogo senza corsie numeriche)<br>')
-                + 'Corsie verticali (Sud→Nord): coppia 1-2 accostata a Est, le altre verso Ovest. 3 settori (Inizio · Centro · Fine).<br>'
-                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto (Nord); gli spazi sono i corridoi.<br>'
+                + 'Corsie in fila lungo Sud→Nord (1 poi 2 nella stessa colonna, separate da uno spazio); colonne 1-2, 3-4… da Est verso Ovest.<br>'
+                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto; gli spazi sono i corridoi. 3 settori (Inizio·Centro·Fine).<br>'
                 + 'Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.'
                 + '</div>';
             $('aisleMapBody').innerHTML = h;
