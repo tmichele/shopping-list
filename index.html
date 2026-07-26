@@ -995,10 +995,7 @@
             border: 2px solid var(--gr);
             border-radius: 8px;
             background: #fbfbfb;
-            padding: 22px 26px 30px;   /* perimetro/camminamento + spazio per bussola e ingresso */
-            display: flex;
-            flex-direction: column;
-            gap: 18px;                 /* corridoio tra le file (nord-sud) */
+            padding: 24px 26px 30px;   /* perimetro/camminamento + spazio per bussola e ingresso */
             overflow-x: auto
         }
 
@@ -1017,7 +1014,7 @@
         .amap-entrance {
             position: absolute;
             bottom: 3px;
-            right: 10px;
+            right: 10px;               /* ingresso a Sud-Est (sulla corsia 1) */
             font-size: 9px;
             font-weight: 700;
             color: var(--o);
@@ -1026,27 +1023,20 @@
             padding: 1px 5px
         }
 
-        .amap-file {
+        .amap-files {
             display: flex;
-            align-items: center;
-            gap: 6px
+            flex-direction: row;
+            justify-content: flex-end;  /* coppia 1-2 accostata al lato Est (destra) */
+            align-items: flex-end;      /* corsie appoggiate a Sud (basso) */
+            gap: 18px;                  /* corridoio tra le coppie (Est-Ovest) */
+            min-width: min-content
         }
 
-        .amap-fdir {
-            width: 14px;
-            flex-shrink: 0;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--g)
-        }
-
-        .amap-aisles {
-            flex: 1;
+        .amap-pair {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 14px               /* corridoio tra corsie affiancate (est-ovest) */
+            flex-direction: row;
+            align-items: flex-end;
+            gap: 6px                    /* piccolo spazio tra le due corsie della stessa coppia */
         }
 
         .amap-aisle {
@@ -3078,7 +3068,7 @@
             const cols = Math.max(1, parseInt($('aColsI').value) || aisleCols);
             const present = new Set(products.map(p => parseInt(p.a)).filter(n => !isNaN(n) && n >= 1));
             const maxN = present.size ? Math.max(...present) : 8; // senza catalogo: layout dimostrativo 1..8
-            const rows = Math.ceil(maxN / cols);
+            const files = Math.ceil(maxN / cols);
 
             const SECT = ['Inizio', 'Centro', 'Fine'];
 
@@ -3086,17 +3076,18 @@
             h += '<div class="amap-store">';
             h += '<span class="amap-compass n">N</span><span class="amap-compass s">S</span>'
                 + '<span class="amap-compass e">E</span><span class="amap-compass o">O</span>';
-            // File impilate: la fila 0 (con la corsia 1) è a Sud, quindi in basso → si parte dal fondo.
-            for (let f = rows - 1; f >= 0; f--) {
-                h += '<div class="amap-file"><span class="amap-fdir">' + (f % 2 === 0 ? '←' : '→') + '</span><div class="amap-aisles">';
+            h += '<div class="amap-files">';
+            // Corsie verticali affiancate: la coppia 1-2 è accostata al lato Est (destra),
+            // le coppie successive (3-4, 5-6…) proseguono verso Ovest. Rendo prima la coppia
+            // più a Ovest (numeri più alti, a sinistra) e per ultima la 1-2 (a destra).
+            for (let f = files - 1; f >= 0; f--) {
+                h += '<div class="amap-pair">';
                 for (let vc = 0; vc < cols; vc++) {
-                    const col = cols - 1 - vc;            // colonna 0 (corsia f*cols+1) a destra = Est
-                    const n = f * cols + col + 1;
+                    const n = f * cols + (cols - vc);    // dentro la coppia: Ovest→Est = n decrescente (1 a Est)
                     if (n > maxN) { h += '<span class="amap-empty"></span>'; continue; }
-                    // Verso di percorrenza (posizione nel serpentine): pari = Inizio a Sud (basso),
-                    // dispari = Inizio a Nord (alto). Coerente con l'ordinamento reale della Lista.
-                    const order = f * cols + (f % 2 === 0 ? col : (cols - 1 - col));
-                    const inizioBottom = order % 2 === 0;
+                    // Percorso a serpentina: corsie dispari si salgono (Inizio a Sud), pari si
+                    // scendono (Inizio a Nord). La corsia 1 parte dall'ingresso a Sud-Est.
+                    const inizioBottom = (n - 1) % 2 === 0;
                     const state = !present.size ? '' : (present.has(n) ? ' on' : ' off');
                     let sec = '';
                     for (let k = 0; k < 3; k++) {
@@ -3105,14 +3096,15 @@
                     }
                     h += '<div class="amap-aisle' + state + '"><div class="amap-num">' + n + '</div>' + sec + '</div>';
                 }
-                h += '</div></div>';
+                h += '</div>';
             }
+            h += '</div>';
             h += '<span class="amap-entrance">🚪 Ingresso/Uscita</span>';
             h += '</div>';
             h += '<div class="amap-legend">'
                 + (present.size ? '🟢 corsia a catalogo · grigia = non usata<br>' : 'Layout dimostrativo (catalogo senza corsie numeriche)<br>')
-                + 'Corsie orientate Sud→Nord, divise in 3 settori (Inizio · Centro · Fine); gli spazi sono i corridoi.<br>'
-                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto (Nord).<br>'
+                + 'Corsie verticali (Sud→Nord): coppia 1-2 accostata a Est, le altre verso Ovest. 3 settori (Inizio · Centro · Fine).<br>'
+                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto (Nord); gli spazi sono i corridoi.<br>'
                 + 'Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.'
                 + '</div>';
             $('aisleMapBody').innerHTML = h;
