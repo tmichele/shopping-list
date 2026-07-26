@@ -989,36 +989,73 @@
             margin-bottom: 8px
         }
 
-        .amap {
+        /* Piantina del supermercato: rettangolo con bussola (N/S/E/O) e ingresso a SE */
+        .amap-store {
+            position: relative;
+            border: 2px solid var(--gr);
+            border-radius: 8px;
+            background: #fbfbfb;
+            padding: 22px 26px 30px;   /* perimetro/camminamento + spazio per bussola e ingresso */
             display: flex;
             flex-direction: column;
-            gap: 16px;             /* corridoio tra le file di corsie */
-            margin: 4px 0
+            gap: 18px;                 /* corridoio tra le file (nord-sud) */
+            overflow-x: auto
         }
 
-        .amap-row {
-            display: flex;
-            align-items: stretch;
-            gap: 12px              /* corridoio tra corsie affiancate */
+        .amap-compass {
+            position: absolute;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--gr)
         }
 
-        .amap-dir {
-            width: 18px;
-            flex-shrink: 0;
+        .amap-compass.n { top: 3px; left: 50%; transform: translateX(-50%) }
+        .amap-compass.s { bottom: 3px; left: 50%; transform: translateX(-50%) }
+        .amap-compass.e { right: 5px; top: 50%; transform: translateY(-50%) }
+        .amap-compass.o { left: 5px; top: 50%; transform: translateY(-50%) }
+
+        .amap-entrance {
+            position: absolute;
+            bottom: 3px;
+            right: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--o);
+            background: var(--ob);
+            border-radius: 4px;
+            padding: 1px 5px
+        }
+
+        .amap-file {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 15px;
+            gap: 6px
+        }
+
+        .amap-fdir {
+            width: 14px;
+            flex-shrink: 0;
+            text-align: center;
+            font-size: 13px;
             font-weight: 700;
             color: var(--g)
         }
 
-        .amap-aisle {
+        .amap-aisles {
             flex: 1;
-            min-width: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 14px               /* corridoio tra corsie affiancate (est-ovest) */
+        }
+
+        .amap-aisle {
+            flex: 0 0 40px;
+            width: 40px;
+            height: 160px;          /* proporzione ~1:4 (larghezza:altezza) */
             display: flex;
             flex-direction: column;
-            border-radius: 6px;
+            border-radius: 5px;
             overflow: hidden;
             border: 1px solid var(--grl);
             background: #fff
@@ -1030,10 +1067,11 @@
         }
 
         .amap-num {
+            flex: 0 0 auto;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
-            padding: 3px 0;
+            padding: 2px 0;         /* numero sul lato stretto (nord) */
             color: #333;
             background: var(--grb)
         }
@@ -1052,47 +1090,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 20px;
-            font-size: 9px;
-            color: #888;
+            font-size: 8px;
+            color: #999;
             border-top: 1px dashed var(--grl)
         }
 
-        .amap-sector.s0 {
-            background: #fafafa
-        }
+        .amap-sector.s0 { background: #fafafa }
+        .amap-sector.s1 { background: #f0f0f0 }
+        .amap-sector.s2 { background: #e5e5e5 }
 
-        .amap-sector.s1 {
-            background: #f0f0f0
-        }
-
-        .amap-sector.s2 {
-            background: #e5e5e5
-        }
-
-        .amap-aisle.on .amap-sector {
-            color: #4a7a4a
-        }
-
-        .amap-aisle.on .amap-sector.s0 {
-            background: rgba(46, 125, 50, .06)
-        }
-
-        .amap-aisle.on .amap-sector.s1 {
-            background: rgba(46, 125, 50, .12)
-        }
-
-        .amap-aisle.on .amap-sector.s2 {
-            background: rgba(46, 125, 50, .18)
-        }
-
-        .amap-aisle.off .amap-sector {
-            color: #ccc
-        }
+        .amap-aisle.on .amap-sector { color: #4a7a4a }
+        .amap-aisle.on .amap-sector.s0 { background: rgba(46, 125, 50, .06) }
+        .amap-aisle.on .amap-sector.s1 { background: rgba(46, 125, 50, .12) }
+        .amap-aisle.on .amap-sector.s2 { background: rgba(46, 125, 50, .18) }
+        .amap-aisle.off .amap-sector { color: #ccc }
 
         .amap-empty {
-            flex: 1;
-            min-width: 0
+            flex: 0 0 40px;
+            width: 40px
         }
 
         .amap-legend {
@@ -3067,32 +3082,38 @@
 
             const SECT = ['Inizio', 'Centro', 'Fine'];
 
-            let h = '<div class="amap-sub">' + cols + ' corsie per fila · percorso a serpentina</div><div class="amap">';
-            for (let r = 0; r < rows; r++) {
-                h += '<div class="amap-row"><span class="amap-dir">' + (r % 2 === 0 ? '→' : '←') + '</span>';
-                for (let c = 0; c < cols; c++) {
-                    const n = r * cols + c + 1;
+            let h = '<div class="amap-sub">' + cols + ' corsie per fila · ingresso a Sud-Est · percorso a serpentina</div>';
+            h += '<div class="amap-store">';
+            h += '<span class="amap-compass n">N</span><span class="amap-compass s">S</span>'
+                + '<span class="amap-compass e">E</span><span class="amap-compass o">O</span>';
+            // File impilate: la fila 0 (con la corsia 1) è a Sud, quindi in basso → si parte dal fondo.
+            for (let f = rows - 1; f >= 0; f--) {
+                h += '<div class="amap-file"><span class="amap-fdir">' + (f % 2 === 0 ? '←' : '→') + '</span><div class="amap-aisles">';
+                for (let vc = 0; vc < cols; vc++) {
+                    const col = cols - 1 - vc;            // colonna 0 (corsia f*cols+1) a destra = Est
+                    const n = f * cols + col + 1;
                     if (n > maxN) { h += '<span class="amap-empty"></span>'; continue; }
-                    // Posizione nel percorso a serpentina → verso di percorrenza della corsia:
-                    // pari = si entra dall'alto (Inizio in cima), dispari = dal basso, così i
-                    // settori si "invertono" e simulano il serpentine anche in verticale.
-                    const order = r * cols + (r % 2 === 0 ? c : (cols - 1 - c));
-                    const topFirst = order % 2 === 0;
+                    // Verso di percorrenza (posizione nel serpentine): pari = Inizio a Sud (basso),
+                    // dispari = Inizio a Nord (alto). Coerente con l'ordinamento reale della Lista.
+                    const order = f * cols + (f % 2 === 0 ? col : (cols - 1 - col));
+                    const inizioBottom = order % 2 === 0;
                     const state = !present.size ? '' : (present.has(n) ? ' on' : ' off');
                     let sec = '';
                     for (let k = 0; k < 3; k++) {
-                        const idx = topFirst ? k : 2 - k; // ordine dei settori dall'alto in basso
+                        const idx = inizioBottom ? 2 - k : k; // settori dall'alto (Nord) al basso (Sud)
                         sec += '<div class="amap-sector s' + idx + '">' + SECT[idx] + '</div>';
                     }
                     h += '<div class="amap-aisle' + state + '"><div class="amap-num">' + n + '</div>' + sec + '</div>';
                 }
-                h += '</div>';
+                h += '</div></div>';
             }
+            h += '<span class="amap-entrance">🚪 Ingresso/Uscita</span>';
             h += '</div>';
             h += '<div class="amap-legend">'
-                + (present.size ? '🟢 corsia presente a catalogo · grigia = non usata<br>' : 'Layout dimostrativo (catalogo senza corsie numeriche)<br>')
-                + 'Ogni corsia è divisa in 3 settori (Inizio · Centro · Fine); gli spazi tra i rettangoli sono i corridoi.<br>'
-                + 'Percorso a serpentina (fila 1 →, fila 2 ←, …). Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.'
+                + (present.size ? '🟢 corsia a catalogo · grigia = non usata<br>' : 'Layout dimostrativo (catalogo senza corsie numeriche)<br>')
+                + 'Corsie orientate Sud→Nord, divise in 3 settori (Inizio · Centro · Fine); gli spazi sono i corridoi.<br>'
+                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto (Nord).<br>'
+                + 'Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.'
                 + '</div>';
             $('aisleMapBody').innerHTML = h;
         }
