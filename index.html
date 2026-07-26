@@ -3089,13 +3089,11 @@
                 for (let c = numCols - 1; c >= 0; c--) {      // c=numCols-1 Ovest (sx) → c=0 Est (dx)
                     const n = c * perCol + r + 1;
                     if (n > maxN) { h += '<span class="amap-empty"></span>'; continue; }
-                    // Serpentine: colonne pari (0,2,…) si salgono (Inizio a Sud), dispari si
-                    // scendono (Inizio a Nord). Coerente con l'ordinamento reale della Lista.
-                    const inizioBottom = c % 2 === 0;
                     const state = !present.size ? '' : (present.has(n) ? ' on' : ' off');
+                    // Ogni corsia: Inizio sempre sul lato Sud (in basso), Fine a Nord (in alto).
                     let sec = '';
                     for (let k = 0; k < 3; k++) {
-                        const idx = inizioBottom ? 2 - k : k; // settori dall'alto (Nord) al basso (Sud)
+                        const idx = 2 - k; // dall'alto (Nord): Fine, Centro, Inizio (Sud)
                         sec += '<div class="amap-sector s' + idx + '">' + SECT[idx] + '</div>';
                     }
                     h += '<div class="amap-aisle' + state + '"><div class="amap-num">' + n + '</div>' + sec + '</div>';
@@ -3108,7 +3106,7 @@
             h += '<div class="amap-legend">'
                 + (present.size ? '🟢 corsia a catalogo · grigia = non usata<br>' : 'Layout dimostrativo (catalogo senza corsie numeriche)<br>')
                 + 'Corsie in fila lungo Sud→Nord (1 poi 2 nella stessa colonna, separate da uno spazio); colonne 1-2, 3-4… da Est verso Ovest.<br>'
-                + 'Ingresso/uscita a Sud-Est sulla corsia 1 (Inizio). Il numero è sul lato stretto; gli spazi sono i corridoi. 3 settori (Inizio·Centro·Fine).<br>'
+                + 'Ingresso/uscita a Sud-Est sulla corsia 1. Ogni corsia ha Inizio a Sud e Fine a Nord; il numero è sul lato stretto, gli spazi sono i corridoi.<br>'
                 + 'Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.'
                 + '</div>';
             $('aisleMapBody').innerHTML = h;
