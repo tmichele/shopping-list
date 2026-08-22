@@ -1132,8 +1132,36 @@
 
         .aed-col {
             display: flex;
-            flex-direction: column-reverse; /* Sud (row0) in basso, slot ＋ in alto */
+            flex-direction: column;         /* Nord (intestazione) in alto → Sud in basso */
+            align-items: center;
             gap: 6px
+        }
+
+        .aed-colhdr {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 2px
+        }
+
+        .aed-rowbtn {
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--grl);
+            border-radius: 6px;
+            background: #fff;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+            color: #444;
+            cursor: pointer
+        }
+
+        .aed-rown {
+            font-size: 10px;
+            color: #666;
+            min-width: 34px;
+            text-align: center
         }
 
         .aed-cell {
@@ -1159,14 +1187,15 @@
 
         .aed-slot {
             width: 44px;
-            height: 26px;
+            height: 44px;
             flex: 0 0 44px;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px dashed var(--grl);
             border-radius: 8px;
-            color: #bbb;
+            color: #ccc;
+            font-size: 18px;
             cursor: pointer
         }
 
@@ -3351,48 +3380,53 @@
             renderAisleEditor();
         }
 
-        function aisleEditCleanup() { editLayout = editLayout.filter(col => col.length > 0); }
+        // Colonna "vuota" = nessuna corsia (solo slot null): viene scartata al salvataggio
+        function aisleColEmpty(col) { return col.every(a => a == null); }
+        function aisleEditCleanup() { editLayout = editLayout.filter(col => col.length > 0 && !aisleColEmpty(col)); }
         function aisleEditSelValue() {
             if (!aisleSel) return null;
             return aisleSel.kind === 'grid' ? editLayout[aisleSel.c][aisleSel.i] : editPalette[aisleSel.i];
         }
-        function aisleEditRemoveSel() {
-            if (aisleSel.kind === 'grid') editLayout[aisleSel.c].splice(aisleSel.i, 1);
+        function aisleEditClearSource() {                     // libera lo slot/tile d'origine (senza alterare le altezze)
+            if (aisleSel.kind === 'grid') editLayout[aisleSel.c][aisleSel.i] = null;
             else editPalette.splice(aisleSel.i, 1);
         }
 
-        function aisleTapAisle(c, i) {
-            if (!aisleSel) { aisleSel = { kind: 'grid', c, i }; return renderAisleEditor(); }
-            if (aisleSel.kind === 'grid' && aisleSel.c === c && aisleSel.i === i) { aisleSel = null; return renderAisleEditor(); }
-            aisleMove(c, i);
-        }
-
-        // Sposta la selezione su una corsia esistente: scambio (grid) o inserimento (palette)
-        function aisleMove(c, i) {
-            const a = aisleEditSelValue();
-            if (aisleSel.kind === 'grid') {
-                const b = editLayout[c][i];
-                editLayout[c][i] = a;
-                editLayout[aisleSel.c][aisleSel.i] = b;      // scambio in place
-            } else {
-                editPalette.splice(aisleSel.i, 1);
-                editLayout[c].splice(i, 0, a);               // dalla palette: inserisci prima del target
+        // Tocco su una cella della griglia (piena o vuota)
+        function aisleTapCell(c, i) {
+            const cur = editLayout[c][i];
+            if (!aisleSel) {
+                if (cur == null) return;                     // slot vuoto: niente da selezionare
+                aisleSel = { kind: 'grid', c, i }; return renderAisleEditor();
             }
-            aisleSel = null; aisleEditCleanup(); renderAisleEditor();
+            if (aisleSel.kind === 'grid' && aisleSel.c === c && aisleSel.i === i) { aisleSel = null; return renderAisleEditor(); }
+            const a = aisleEditSelValue();
+            if (cur == null) {                               // sposta nello slot vuoto
+                aisleEditClearSource();
+                editLayout[c][i] = a;
+            } else if (aisleSel.kind === 'grid') {           // scambio tra due corsie
+                editLayout[aisleSel.c][aisleSel.i] = cur;
+                editLayout[c][i] = a;
+            } else {                                         // dalla palette su cella piena: scambio, la vecchia torna in palette
+                editPalette.splice(aisleSel.i, 1);
+                editPalette.push(cur); editPalette.sort((x, y) => x - y);
+                editLayout[c][i] = a;
+            }
+            aisleSel = null; renderAisleEditor();
         }
 
-        function aisleTapSlot(c) {                            // aggiungi in cima (Nord) alla colonna c
-            if (!aisleSel) return;
-            const a = aisleEditSelValue(); aisleEditRemoveSel();
-            editLayout[c].push(a);
-            aisleSel = null; aisleEditCleanup(); renderAisleEditor();
+        // Cambia il numero di fila (righe) della colonna c: +1 aggiunge uno slot a Nord,
+        // -1 rimuove la fila più a Nord solo se vuota.
+        function aisleColRow(c, delta) {
+            if (delta > 0) { editLayout[c].push(null); }
+            else if (editLayout[c].length && editLayout[c][editLayout[c].length - 1] == null) { editLayout[c].pop(); }
+            else { toast('Svuota prima la fila in cima'); return; }
+            renderAisleEditor();
         }
 
-        function aisleTapNewCol() {                           // nuova colonna a Ovest
-            if (!aisleSel) return;
-            const a = aisleEditSelValue(); aisleEditRemoveSel();
-            editLayout.push([a]);
-            aisleSel = null; aisleEditCleanup(); renderAisleEditor();
+        function aisleTapNewCol() {                           // nuova colonna vuota a Ovest (1 fila)
+            editLayout.push([null]);
+            renderAisleEditor();
         }
 
         function aisleTapPalette(i) {
@@ -3403,9 +3437,9 @@
         function aisleTapRemove() {                           // rimetti la corsia selezionata tra le non disposte
             if (!aisleSel || aisleSel.kind !== 'grid') return;
             const a = editLayout[aisleSel.c][aisleSel.i];
-            editLayout[aisleSel.c].splice(aisleSel.i, 1);
+            editLayout[aisleSel.c][aisleSel.i] = null;       // libera lo slot (mantiene l'altezza della colonna)
             editPalette.push(a); editPalette.sort((x, y) => x - y);
-            aisleSel = null; aisleEditCleanup(); renderAisleEditor();
+            aisleSel = null; renderAisleEditor();
         }
 
         function resetEditToAuto() {
@@ -3437,22 +3471,32 @@
             const present = presentAisleSet();
             const numCols = editLayout.length;
 
-            let h = '<div class="amap-sub">Tocca una corsia, poi la destinazione. Est = destra · 🚪 ingresso in basso a destra.</div>';
+            let h = '<div class="amap-sub">Tocca una corsia, poi la destinazione (o uno slot vuoto). ＋ / − cambia le fila della colonna. Est = destra.</div>';
             h += '<div class="aed-store"><span class="amap-compass n">N</span><span class="amap-compass s">S</span>'
                 + '<span class="amap-compass e">E</span><span class="amap-compass o">O</span>';
             h += '<div class="aed-grid">';
             // nuova colonna a Ovest (a sinistra)
             h += '<div class="aed-newcol" onclick="aisleTapNewCol()">＋<br>col</div>';
             for (let c = numCols - 1; c >= 0; c--) {          // Ovest (sx) → Est (dx)
+                const col = editLayout[c];
                 h += '<div class="aed-col">';
-                // ordine DOM: Sud (row0) prima; column-reverse mette row0 in basso, slot in alto
-                for (let i = 0; i < editLayout[c].length; i++) {
-                    const n = editLayout[c][i];
+                // intestazione (Nord, in alto): stepper del numero di fila della colonna
+                h += '<div class="aed-colhdr">'
+                    + '<button class="aed-rowbtn" onclick="aisleColRow(' + c + ',-1)">−</button>'
+                    + '<span class="aed-rown">' + col.length + ' fila</span>'
+                    + '<button class="aed-rowbtn" onclick="aisleColRow(' + c + ',1)">＋</button>'
+                    + '</div>';
+                // slot da Nord (in alto) a Sud (in basso)
+                for (let i = col.length - 1; i >= 0; i--) {
+                    const n = col[i];
+                    if (n == null) {
+                        h += '<div class="aed-slot" onclick="aisleTapCell(' + c + ',' + i + ')">·</div>';
+                        continue;
+                    }
                     const sel = aisleSel && aisleSel.kind === 'grid' && aisleSel.c === c && aisleSel.i === i ? ' sel' : '';
                     const state = present.has(n) ? ' on' : (present.size ? ' off' : '');
-                    h += '<div class="aed-cell' + state + sel + '" onclick="aisleTapAisle(' + c + ',' + i + ')">' + n + '</div>';
+                    h += '<div class="aed-cell' + state + sel + '" onclick="aisleTapCell(' + c + ',' + i + ')">' + n + '</div>';
                 }
-                h += '<div class="aed-slot" onclick="aisleTapSlot(' + c + ')">＋</div>';
                 h += '</div>';
             }
             h += '</div><span class="amap-entrance">🚪</span></div>';
