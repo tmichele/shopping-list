@@ -1125,10 +1125,14 @@
             display: flex;
             flex-direction: row;
             align-items: flex-end;
-            justify-content: flex-end;
             gap: 12px;
-            min-width: min-content
+            width: max-content;
+            min-width: 100%
         }
+
+        /* Spinge il contenuto verso Est (destra) quando c'è spazio, ma resta
+           scrollabile senza tagliare le colonne a Ovest (evita il bug di flex-end). */
+        .aed-newcol { margin-left: auto }
 
         .aed-col {
             display: flex;
@@ -3494,6 +3498,10 @@
         function renderAisleEditor() {
             const present = presentAisleSet();
             const numCols = editLayout.length;
+            // Conserva lo scroll orizzontale tra i re-render (altrimenti a ogni tocco la
+            // vista salta a Ovest). Alla prima apertura mostra l'Est (ingresso/corsia 1).
+            const prevStore = document.querySelector('.aed-store');
+            const keepScroll = prevStore ? prevStore.scrollLeft : null;
 
             let h = '<div class="amap-sub">Tocca una corsia, poi la destinazione (o uno slot vuoto). ＋ / − cambia le fila della colonna. Est = destra.</div>';
             h += '<div class="aed-store"><span class="amap-compass n">N</span><span class="amap-compass s">S</span>'
@@ -3548,6 +3556,8 @@
                 + '<button class="mb s" onclick="cancelAisleEdit()">Annulla</button>'
                 + '</div>';
             $('aisleMapBody').innerHTML = h;
+            const store = document.querySelector('.aed-store');
+            if (store) store.scrollLeft = keepScroll != null ? keepScroll : store.scrollWidth;
         }
 
         // Migrazione massiva: sposta tutti i prodotti da una corsia a un'altra
