@@ -58,6 +58,11 @@
             --accent-bg: #E0F7FA
         }
 
+        body[data-theme="map"] {
+            --accent: #37474F;
+            --accent-bg: #ECEFF1
+        }
+
         .sug-sub {
             font-size: 12px;
             color: var(--gr);
@@ -1752,11 +1757,15 @@
     <div id="suP" class="page">
         <div id="suC"></div>
     </div>
+    <div id="maP" class="page">
+        <div id="maC"></div>
+    </div>
     <div class="tab-bar"><button class="tab active" onclick="goToTab('catalog')" id="t1"><span
                 class="tab-icon">📦</span>Catalogo</button><button class="tab" onclick="goToTab('list')" id="t2"><span
                 class="tab-icon">📋</span>Lista<span class="tbadge" id="lB"></span></button><button class="tab"
             onclick="goToTab('pantry')" id="tPa"><span class="tab-icon">🏠</span>Dispensa</button><button class="tab"
             onclick="goToTab('suggest')" id="t4" style="display:none"><span class="tab-icon">💡</span>Suggeriti</button><button class="tab"
+            onclick="goToTab('map')" id="tMa" style="display:none"><span class="tab-icon">🗺️</span>Mappa</button><button class="tab"
             onclick="goToTab('stats')" id="t3"><span class="tab-icon">📊</span>Stats</button></div>
     <div class="mo" id="sM" onclick="if(event.target===this)closeModal('sM')">
         <div class="md">
@@ -1791,6 +1800,8 @@
         <input type="number" id="aColsI" class="si" min="1" max="30" placeholder="2"><button class="sb"
             onclick="saveAisleCols()">💾 Salva corsie</button><button class="sb sk"
             onclick="showAisleMap()">👁️ Anteprima / modifica disposizione corsie</button>
+        <label class="adv-row"><input type="checkbox" id="mapI" onchange="toggleMapTab(this.checked)"> 🗺️ Tab
+            Mappa — piantina del negozio vista dall'alto con il percorso di spesa</label>
         <label class="ss-sub">Migrazione corsie — sposta tutti i prodotti da una corsia a un'altra:</label>
         <div class="mig-row">
             <input type="text" id="migFrom" class="si mig-in" placeholder="da (es. 5)" autocomplete="off">
@@ -1847,7 +1858,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script>
         const DF = [{ n: "Tassoni", a: "5", c: "Bevande", pr: 1.80, no: "" }, { n: "Chinò Zero", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Serprino", a: "4", c: "Bevande", pr: 3.50, no: "Vino frizzante" }, { n: "Birra piccola", a: "6", c: "Bevande", pr: 1.50, no: "" }, { n: "Aperitivo genziana Lurisia", a: "2", c: "Bevande", pr: 2.50, no: "" }, { n: "Lemonsoda Zero", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Coca Cola Zero", a: "5", c: "Bevande", pr: 1.80, no: "" }, { n: "Acqua naturale", a: "", c: "Bevande", pr: 0.50, no: "" }, { n: "Succhetti alla pera", a: "5", c: "Bevande", pr: 2.00, no: "" }, { n: "Birra IPA Moretti", a: "6", c: "Bevande", pr: 2.00, no: "" }, { n: "Succo pera 1L", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Birra grande", a: "6", c: "Bevande", pr: 2.50, no: "" }, { n: "Succo Ace 1L", a: "5", c: "Bevande", pr: 1.50, no: "" }, { n: "Acqua frizzante", a: "", c: "Bevande", pr: 0.50, no: "" }, { n: "Menta Fabbri", a: "", c: "Bevande", pr: 4.00, no: "Sciroppo" }, { n: "Acqua demineralizzata", a: "", c: "Bevande", pr: 1.00, no: "" }, { n: "Diger", a: "", c: "Bevande", pr: 3.50, no: "" }, { n: "Tisane Pompadur", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Cialde caffè", a: "20", c: "Tè e Tisane", pr: 5.00, no: "" }, { n: "Cialde caffè deca", a: "20", c: "Tè e Tisane", pr: 5.00, no: "" }, { n: "Infuso Mela d'Oriente", a: "20", c: "Tè e Tisane", pr: 3.50, no: "" }, { n: "Tisane fredde", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Thè", a: "20", c: "Tè e Tisane", pr: 2.50, no: "" }, { n: "Té allo zenzero", a: "20", c: "Tè e Tisane", pr: 3.00, no: "" }, { n: "Gingerini", a: "1", c: "Dolci e Snack", pr: 2.50, no: "" }, { n: "Farfalle integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Casarecce integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Tortiglioni integrali Barilla", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Sedanini integrali", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "Caserecce integrali", a: "7", c: "Pasta", pr: 1.30, no: "" }, { n: "I sedani rigati Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "La mezza manica Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "La linguina Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Il Fusillo Voiello", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Linguine", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Spaghetti", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Trofie", a: "8", c: "Pasta", pr: 1.50, no: "" }, { n: "Pasta generica", a: "8", c: "Pasta", pr: 1.20, no: "" }, { n: "Pasta integrale", a: "17", c: "Pasta", pr: 1.30, no: "" }, { n: "Tortiglioni integrali", a: "17", c: "Pasta", pr: 1.30, no: "" }, { n: "Riso carnaroli", a: "7", c: "Riso e Cereali", pr: 2.50, no: "" }, { n: "Riso basmati", a: "", c: "Riso e Cereali", pr: 2.80, no: "" }, { n: "Avena", a: "", c: "Riso e Cereali", pr: 2.50, no: "" }, { n: "Polenta", a: "", c: "Riso e Cereali", pr: 2.00, no: "" }, { n: "Fette biscottate", a: "24", c: "Pane e Forno", pr: 1.40, no: "" }, { n: "Macoritti integrali", a: "26", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Ricciolino olio/integrale", a: "26", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Bruschette", a: "", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Piadelle", a: "", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Crackers al riso", a: "26", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Grissini grossi", a: "", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Pane", a: "", c: "Pane e Forno", pr: 1.80, no: "" }, { n: "Pane grattuggiato", a: "", c: "Pane e Forno", pr: 1.50, no: "" }, { n: "Pane integrale hamburger", a: "", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Crostini insalate/vellutate", a: "28", c: "Pane e Forno", pr: 2.00, no: "" }, { n: "Taralli", a: "28", c: "Pane e Forno", pr: 2.50, no: "" }, { n: "Cioccolatini fondenti", a: "1", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Cioccolata nocciole Novi", a: "1", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Biscotti", a: "18", c: "Dolci e Snack", pr: 2.50, no: "Saracene, Bucaneve, Fagottini, Tre Marie" }, { n: "Digestives cioccolato", a: "18", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Fonzie", a: "28", c: "Dolci e Snack", pr: 1.50, no: "" }, { n: "Patatine", a: "28", c: "Dolci e Snack", pr: 2.00, no: "" }, { n: "Biscotti per torta", a: "18", c: "Dolci e Snack", pr: 2.50, no: "" }, { n: "Pop corn", a: "", c: "Dolci e Snack", pr: 2.00, no: "" }, { n: "Cioccolata mandorle", a: "", c: "Dolci e Snack", pr: 3.00, no: "" }, { n: "Crema Pistacchio", a: "", c: "Dolci e Snack", pr: 5.00, no: "" }, { n: "Crema cioccolato fondente", a: "22", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Marmellatine formaggi", a: "", c: "Dolci e Snack", pr: 3.50, no: "" }, { n: "Mostarda", a: "", c: "Dolci e Snack", pr: 4.00, no: "" }, { n: "Cacao amaro", a: "29", c: "Farine e Ingredienti", pr: 3.00, no: "" }, { n: "Fecola di patate", a: "29", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Farina di riso", a: "29", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Farina integrale", a: "29", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Farina manitoba/Caputo", a: "29", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Farina 00", a: "29", c: "Farine e Ingredienti", pr: 1.00, no: "" }, { n: "Zucchero bianco", a: "29", c: "Farine e Ingredienti", pr: 1.20, no: "" }, { n: "Zucchero di canna", a: "29", c: "Farine e Ingredienti", pr: 1.80, no: "" }, { n: "Zucchero a velo", a: "", c: "Farine e Ingredienti", pr: 1.50, no: "" }, { n: "Zucchero", a: "29", c: "Farine e Ingredienti", pr: 1.20, no: "" }, { n: "Vanillina", a: "", c: "Farine e Ingredienti", pr: 0.80, no: "" }, { n: "Lievito pizza", a: "", c: "Farine e Ingredienti", pr: 0.50, no: "" }, { n: "Lievito dolci", a: "", c: "Farine e Ingredienti", pr: 0.80, no: "" }, { n: "Colla di pesce", a: "", c: "Farine e Ingredienti", pr: 2.00, no: "" }, { n: "Passata pizza", a: "14", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Aceto balsamico Due vittorie", a: "12", c: "Salse e Condimenti", pr: 3.50, no: "" }, { n: "Maionese", a: "12", c: "Salse e Condimenti", pr: 2.20, no: "" }, { n: "Maionese monoporzioni", a: "12", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Salsa BBQ", a: "", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Aceto lavastoviglie", a: "12", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Funghi", a: "12", c: "Salse e Condimenti", pr: 2.50, no: "In vasetto" }, { n: "Sottaceti", a: "", c: "Salse e Condimenti", pr: 2.00, no: "" }, { n: "Concentrato pomodoro", a: "", c: "Salse e Condimenti", pr: 1.50, no: "" }, { n: "Dadi Bauer", a: "14", c: "Salse e Condimenti", pr: 2.50, no: "" }, { n: "Pesto", a: "", c: "Salse e Condimenti", pr: 2.80, no: "" }, { n: "Curcuma", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Cumino", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Paprika", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Peperoncino oliera", a: "14", c: "Spezie", pr: 1.50, no: "" }, { n: "Chiodi di garofano", a: "14", c: "Spezie", pr: 2.00, no: "" }, { n: "Pepe da macinare", a: "14", c: "Spezie", pr: 3.00, no: "" }, { n: "Sale grosso", a: "14", c: "Spezie", pr: 0.80, no: "" }, { n: "Sale fino", a: "14", c: "Spezie", pr: 0.80, no: "" }, { n: "Tonno", a: "10", c: "Conserve", pr: 3.50, no: "" }, { n: "Tonno in vetro", a: "10", c: "Conserve", pr: 4.50, no: "" }, { n: "Acciughe", a: "10", c: "Conserve", pr: 3.00, no: "" }, { n: "Fagioli rossi", a: "14", c: "Conserve", pr: 1.20, no: "" }, { n: "Fagioli borlotti", a: "14", c: "Conserve", pr: 1.20, no: "" }, { n: "Pinoli", a: "", c: "Conserve", pr: 6.00, no: "" }, { n: "Olio cuore", a: "10", c: "Olio", pr: 4.00, no: "" }, { n: "Olio con aglio", a: "10", c: "Olio", pr: 4.50, no: "" }, { n: "Olio oliva condire", a: "10", c: "Olio", pr: 6.50, no: "" }, { n: "Olio da cucina", a: "10", c: "Olio", pr: 4.00, no: "" }, { n: "Mandorle sgusciate", a: "32", c: "Frutta Secca", pr: 5.00, no: "" }, { n: "Noci sgusciate", a: "32", c: "Frutta Secca", pr: 5.50, no: "" }, { n: "Anacardi", a: "", c: "Frutta Secca", pr: 5.00, no: "" }, { n: "Tortellini", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Veggy food", a: "BF", c: "Banco Frigo", pr: 3.50, no: "" }, { n: "Stracchini", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Ricottine", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Mozzarelle", a: "BF", c: "Banco Frigo", pr: 1.50, no: "" }, { n: "Sottilette Light", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Falafel", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Pasta sfoglia", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Pancetta cubetti", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Sfoglia pasticcio", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Burro", a: "BF", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Yogurt magro Tanja", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Yogurt per torta", a: "BF", c: "Banco Frigo", pr: 1.50, no: "" }, { n: "Yogurt per Michele", a: "BF", c: "Banco Frigo", pr: 3.00, no: "" }, { n: "Grana", a: "BF", c: "Banco Frigo", pr: 5.00, no: "" }, { n: "Grana da grattuggiare", a: "BF", c: "Banco Frigo", pr: 5.00, no: "" }, { n: "Busta grana", a: "BF", c: "Banco Frigo", pr: 3.50, no: "" }, { n: "Fiocchi di latte", a: "BF", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Gelato", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Gelato Loacker", a: "BF", c: "Banco Frigo", pr: 4.50, no: "" }, { n: "Maxibon", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Taleggio/Morlacco/Scamorza", a: "BF", c: "Banco Frigo", pr: 4.00, no: "" }, { n: "Ricotta", a: "BF", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Yogurt Vipiteno Magro", a: "BF", c: "Banco Frigo", pr: 3.50, no: "Frutti bosco, fragola, vaniglia" }, { n: "Pasta sfoglia senza glutine", a: "", c: "Banco Frigo", pr: 2.50, no: "" }, { n: "Mascarpone", a: "", c: "Banco Frigo", pr: 2.00, no: "" }, { n: "Panna per torta", a: "", c: "Banco Frigo", pr: 1.80, no: "" }, { n: "Prosciutto cotto", a: "", c: "Salumeria", pr: 2.50, no: "" }, { n: "Asiago", a: "", c: "Salumeria", pr: 4.00, no: "" }, { n: "Formaggio a fette", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Prosciutto crudo", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Provola/scamorza", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Brie", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Pecossi", a: "", c: "Salumeria", pr: 3.00, no: "" }, { n: "Salame", a: "", c: "Salumeria", pr: 3.50, no: "" }, { n: "Fette filanti s.lattosio", a: "", c: "Salumeria", pr: 2.50, no: "" }, { n: "Latte parz. scremato", a: "31", c: "Latte e Panna", pr: 1.60, no: "Brick rossi" }, { n: "Panna Light cucina", a: "31", c: "Latte e Panna", pr: 1.20, no: "" }, { n: "Besciamella s.glutine", a: "", c: "Latte e Panna", pr: 2.00, no: "" }, { n: "Sfoglia pasticcio s.glutine", a: "", c: "Latte e Panna", pr: 2.50, no: "" }, { n: "Uova", a: "31", c: "Uova", pr: 2.80, no: "" }, { n: "Salsiccia", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Petti di pollo", a: "", c: "Carne", pr: 8.00, no: "" }, { n: "Pollo", a: "", c: "Carne", pr: 7.00, no: "" }, { n: "Carne da grigliare", a: "", c: "Carne", pr: 10.00, no: "" }, { n: "Carne spezzatino", a: "", c: "Carne", pr: 9.00, no: "" }, { n: "Costicine", a: "", c: "Carne", pr: 8.00, no: "" }, { n: "Carne per ragù", a: "", c: "Carne", pr: 9.00, no: "" }, { n: "Hamburger", a: "", c: "Carne", pr: 6.00, no: "" }, { n: "Alette", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Cevapcici", a: "", c: "Carne", pr: 5.00, no: "" }, { n: "Pesce per sugo", a: "BP", c: "Banco Pesce", pr: 8.00, no: "" }, { n: "Gamberi", a: "BP", c: "Banco Pesce", pr: 12.00, no: "" }, { n: "Capesante", a: "BP", c: "Banco Pesce", pr: 15.00, no: "" }, { n: "Pesce da grigliare", a: "BP", c: "Banco Pesce", pr: 10.00, no: "" }, { n: "Salmone", a: "", c: "Pesce", pr: 12.00, no: "" }, { n: "Mele", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Banane", a: "", c: "Frutta", pr: 1.80, no: "" }, { n: "Mandarini", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Arance", a: "", c: "Frutta", pr: 2.20, no: "" }, { n: "Pere", a: "", c: "Frutta", pr: 2.50, no: "" }, { n: "Lamponi", a: "", c: "Frutta", pr: 3.50, no: "" }, { n: "Frutti rossi", a: "", c: "Frutta", pr: 3.50, no: "" }, { n: "Frutta per torta", a: "", c: "Frutta", pr: 3.00, no: "" }, { n: "Limoni", a: "", c: "Frutta", pr: 1.50, no: "" }, { n: "Avocado", a: "", c: "Frutta", pr: 2.00, no: "" }, { n: "Patate", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Carote", a: "", c: "Verdura", pr: 1.20, no: "" }, { n: "Aglio", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Peperoni", a: "", c: "Verdura", pr: 3.00, no: "" }, { n: "Porro", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Finocchi", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Radicchio", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Zucchine", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Melanzane", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Pomodori passata", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Pomodori", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Asparagi", a: "", c: "Verdura", pr: 3.50, no: "" }, { n: "Cipolle rosse", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Pomodorini", a: "", c: "Verdura", pr: 2.50, no: "" }, { n: "Cipolle bianche", a: "", c: "Verdura", pr: 1.00, no: "" }, { n: "Broccoli", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Cavolfiori", a: "", c: "Verdura", pr: 2.00, no: "" }, { n: "Spinaci", a: "", c: "Verdura", pr: 2.50, no: "" }, { n: "Insalata", a: "", c: "Verdura", pr: 1.50, no: "" }, { n: "Saponetta Nesti Firenze", a: "9", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Elmex arancione", a: "11", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Elmex verde", a: "11", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Deodorante Dove", a: "11", c: "Igiene Persona", pr: 3.50, no: "" }, { n: "Crema mani L'Erboristica", a: "", c: "Igiene Persona", pr: 3.50, no: "" }, { n: "Sapone I provenzali", a: "9", c: "Igiene Persona", pr: 2.50, no: "" }, { n: "Sapone Fresh&Clean", a: "9", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Shampoo capelli mossi", a: "9", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Bagnoschiuma", a: "9", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Labello", a: "", c: "Igiene Persona", pr: 3.00, no: "" }, { n: "Cotone struccante", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Rasoi", a: "", c: "Igiene Persona", pr: 5.00, no: "" }, { n: "Ceretta viso", a: "", c: "Igiene Persona", pr: 4.00, no: "" }, { n: "Crema dopo sole", a: "", c: "Igiene Persona", pr: 5.00, no: "" }, { n: "Acetone", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Fazzoletti", a: "", c: "Igiene Persona", pr: 2.00, no: "" }, { n: "Assorbenti giorno", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Assorbenti notte", a: "13", c: "Igiene Femminile", pr: 3.50, no: "" }, { n: "Salvaslip cotone", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Salvaslip perizoma", a: "13", c: "Igiene Femminile", pr: 3.00, no: "" }, { n: "Pastiglie lavastoviglie", a: "21", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Detersivo neonati Winni's", a: "", c: "Pulizia Casa", pr: 5.00, no: "" }, { n: "Ammorbidente Chanteclair", a: "15", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Smacchiatore Omino Bianco", a: "17", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Anticalcare Calgon", a: "15", c: "Pulizia Casa", pr: 5.00, no: "" }, { n: "Detersivo piatti Svelto", a: "21", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Spray sgrassante cucina", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Wc net candeggina", a: "17", c: "Pulizia Casa", pr: 2.50, no: "" }, { n: "Detersivo lavatrice Chanteclair", a: "15", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Candeggina delicata", a: "15", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Candeggina", a: "15", c: "Pulizia Casa", pr: 1.50, no: "" }, { n: "Detersivo Perlana", a: "15", c: "Pulizia Casa", pr: 4.00, no: "" }, { n: "Detersivo Chanteclair", a: "15", c: "Pulizia Casa", pr: 6.00, no: "" }, { n: "Sale lavastoviglie", a: "21", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Viakal profumato", a: "17", c: "Pulizia Casa", pr: 3.50, no: "" }, { n: "Quasar vetri", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Quasar doccia", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Spray sgrassante bagno", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Spray multisuperficie", a: "17", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Brillantante lavastoviglie", a: "", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Limone lavastoviglie", a: "", c: "Pulizia Casa", pr: 2.00, no: "" }, { n: "Veleno formiche", a: "25", c: "Pulizia Casa", pr: 4.00, no: "" }, { n: "Diavolina", a: "", c: "Pulizia Casa", pr: 3.00, no: "" }, { n: "Carta igienica Sensitive", a: "", c: "Carta e Casa", pr: 4.00, no: "" }, { n: "Carta cucina Sensitive", a: "", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Sacchetti 10L umido", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Sacchi 46L plastica", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Guanti S piatti", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Spugne Vileda", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Pellicola trasparente", a: "21", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Sacchetti freezer piccoli", a: "21", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Sacchetti freezer medi", a: "21", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Vaschette freezer", a: "21", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Tovaglioli FATO grigi", a: "30", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Roll pelucchi", a: "", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Panno vetri Vileda", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Spugne Glitzi", a: "19", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Spugne piatte", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Guanti S pulizie", a: "19", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Sacchi 50x60", a: "19", c: "Carta e Casa", pr: 3.00, no: "" }, { n: "Sacchi 40L pannolini", a: "19", c: "Carta e Casa", pr: 3.50, no: "" }, { n: "Sacchi 80L secco", a: "19", c: "Carta e Casa", pr: 4.00, no: "" }, { n: "Sacchetti di carta", a: "", c: "Carta e Casa", pr: 2.00, no: "" }, { n: "Carta forno", a: "", c: "Carta e Casa", pr: 2.50, no: "" }, { n: "Fiocchetti regalo", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Carta da regalo", a: "23", c: "Regali e Varie", pr: 3.00, no: "" }, { n: "Etichette", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Sacchetti regalo", a: "23", c: "Regali e Varie", pr: 3.00, no: "" }, { n: "Spruzzino", a: "23", c: "Regali e Varie", pr: 2.00, no: "" }, { n: "Coperchi vasetti 70mm", a: "", c: "Regali e Varie", pr: 2.50, no: "" }, { n: "Pannolini", a: "22", c: "Bambini", pr: 8.00, no: "" }, { n: "Magretti", a: "0", c: "Animali", pr: 3.00, no: "" }, { n: "Ossetti", a: "", c: "Animali", pr: 3.00, no: "" }, { n: "Crocchette Churro", a: "27", c: "Animali", pr: 10.00, no: "Miglior cane Active" }, { n: "Crocchette Sancho", a: "27", c: "Animali", pr: 8.00, no: "Miglior gatto sterilizzato" }, { n: "Pile AA", a: "4", c: "Varie", pr: 4.00, no: "" }, { n: "Semi giardino", a: "", c: "Varie", pr: 3.00, no: "" }, { n: "Terriccio acidofile", a: "", c: "Varie", pr: 5.00, no: "" }];
-        const APP_VERSION = '1.2.3';
+        const APP_VERSION = '1.3.0';
         // === Stato globale ===
         let products = [];
         let cart = {};
@@ -1868,6 +1879,7 @@
         let tesseractPromise = null;
         let advFeatures = localStorage.getItem('advFeat') === '1';
         let suggestTab = localStorage.getItem('suggestTab') === '1';
+        let mapTab = localStorage.getItem('mapTab') === '1';   // tab Mappa negozio (default nascosta)
         let thresholdsEnabled = localStorage.getItem('thEnabled') !== '0'; // gestione soglie/auto-restock (default attivo)
         let consumptionEstimate = localStorage.getItem('consEst') === '1'; // stima consumo/esaurimento dispensa (default off)
 
@@ -2440,6 +2452,7 @@
             renderList();
             if (currentTab === 'pantry') renderPantry();
             if (currentTab === 'suggest') renderSuggestions();
+            if (currentTab === 'map') renderMapTab();
             $('lB').textContent = Object.keys(cart).length || '';
         }
 
@@ -2989,15 +3002,18 @@
             $('lP').classList.toggle('active', tab === 'list');
             $('paP').classList.toggle('active', tab === 'pantry');
             $('suP').classList.toggle('active', tab === 'suggest');
+            $('maP').classList.toggle('active', tab === 'map');
             $('stP').classList.toggle('active', tab === 'stats');
             $('t1').classList.toggle('active', tab === 'catalog');
             $('t2').classList.toggle('active', tab === 'list');
             $('tPa').classList.toggle('active', tab === 'pantry');
             $('t4').classList.toggle('active', tab === 'suggest');
+            $('tMa').classList.toggle('active', tab === 'map');
             $('t3').classList.toggle('active', tab === 'stats');
             if (tab === 'list') renderList();
             if (tab === 'pantry') renderPantry();
             if (tab === 'suggest') renderSuggestions();
+            if (tab === 'map') renderMapTab();
             if (tab === 'stats') renderStats();
         }
 
@@ -3097,6 +3113,19 @@
             localStorage.setItem('suggestTab', suggestTab ? '1' : '0');
             applySuggestTab();
             toast(suggestTab ? '💡 Tab Suggeriti attivo' : 'Tab Suggeriti nascosto');
+        }
+
+        // Mostra/nasconde il tab Mappa (disattivato di default)
+        function applyMapTab() {
+            $('tMa').style.display = mapTab ? '' : 'none';
+            if (!mapTab && currentTab === 'map') goToTab('catalog');
+        }
+
+        function toggleMapTab(on) {
+            mapTab = !!on;
+            localStorage.setItem('mapTab', mapTab ? '1' : '0');
+            applyMapTab();
+            toast(mapTab ? '🗺️ Tab Mappa attivo' : 'Tab Mappa nascosto');
         }
 
         // Mostra/nasconde il campo Soglia nel form prodotto in base al toggle
@@ -3264,6 +3293,7 @@
             $('maxSinceI').value = maxSinceLastDays;
             $('advI').checked = advFeatures;
             $('sugI').checked = suggestTab;
+            $('mapI').checked = mapTab;
             $('thI').checked = thresholdsEnabled;
             $('ceI').checked = consumptionEstimate;
             $('sS').style.display = 'block';
@@ -3272,6 +3302,7 @@
             $('lP').classList.remove('active');
             $('paP').classList.remove('active');
             $('suP').classList.remove('active');
+            $('maP').classList.remove('active');
             $('stP').classList.remove('active');
         }
 
@@ -3560,6 +3591,100 @@
             if (store) store.scrollLeft = keepScroll != null ? keepScroll : store.scrollWidth;
         }
 
+        // === Tab Mappa: piantina del negozio vista dall'alto con percorso di spesa ===
+        // Disegna in SVG la disposizione corrente (personalizzata o automatica): corsie
+        // rettangolari a 3 settori, corridoi, ingresso a SE e percorso a serpentina.
+        // Le corsie con prodotti della Lista corrente mostrano un badge col conteggio.
+        function renderMapTab() {
+            const el = $('maC');
+            const cols = Math.max(1, aisleCols);
+            const layout = currentLayoutForMap(cols);
+            const present = presentAisleSet();
+
+            // Pezzi in lista per corsia (badge)
+            const listCount = {};
+            Object.entries(cart).forEach(([id, d]) => {
+                const p = products.find(x => x.id === id);
+                const n = p ? parseInt(p.a) : NaN;
+                if (!isNaN(n) && n >= 1) listCount[n] = (listCount[n] || 0) + (d.qty || 1);
+            });
+
+            const numCols = layout.length;
+            const maxRows = Math.max(1, ...layout.map(c => c.length));
+            const W = 44, H = 150, G = 26, VG = 18;         // corsia ~1:4, corridoi tra colonne e tra file
+            const padX = 30, padTop = 36, padBot = 44;
+            const gridH = maxRows * H + (maxRows - 1) * VG;
+            const totalW = padX * 2 + numCols * W + (numCols - 1) * G;
+            const totalH = padTop + gridH + padBot;
+            const xLeft = c => padX + (numCols - 1 - c) * (W + G); // colonna 0 = Est (destra)
+            const xc = c => xLeft(c) + W / 2;
+            const yTop = i => padTop + gridH - (i + 1) * H - i * VG; // fila 0 = Sud (in basso)
+            const NUMB = 16, SECT = ['Fine', 'Centro', 'Inizio'];   // dall'alto (Nord) in giù
+            const ySouth = padTop + gridH + 20, yNorth = padTop - 16;
+
+            let s = '<svg viewBox="0 0 ' + totalW + ' ' + totalH + '" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">';
+            // perimetro negozio + bussola
+            s += '<rect x="4" y="4" width="' + (totalW - 8) + '" height="' + (totalH - 8) + '" rx="10" fill="#fbfbfb" stroke="#757575" stroke-width="2"/>';
+            s += '<text x="' + totalW / 2 + '" y="14" text-anchor="middle" font-size="9" font-weight="700" fill="#757575">N</text>';
+            s += '<text x="' + totalW / 2 + '" y="' + (totalH - 7) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#757575">S</text>';
+            s += '<text x="' + (totalW - 12) + '" y="' + (totalH / 2) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#757575">E</text>';
+            s += '<text x="12" y="' + (totalH / 2) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#757575">O</text>';
+
+            // corsie
+            const SECT_FILL = ['#e5e5e5', '#f0f0f0', '#fafafa'];            // Fine, Centro, Inizio (grigie)
+            const SECT_ON = ['rgba(46,125,50,.18)', 'rgba(46,125,50,.12)', 'rgba(46,125,50,.06)'];
+            layout.forEach((col, c) => {
+                col.forEach((n, i) => {
+                    if (n == null) return;
+                    const x = xLeft(c), y = yTop(i), on = present.has(n);
+                    s += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + H + '" rx="5" fill="#fff" stroke="' + (on ? '#2E7D32' : '#E0E0E0') + '" stroke-width="' + (on ? 2 : 1) + '"/>';
+                    s += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + NUMB + '" fill="' + (on ? '#2E7D32' : '#F5F5F5') + '"/>';
+                    s += '<text x="' + (x + W / 2) + '" y="' + (y + 12) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' + (on ? '#fff' : '#bbb') + '">' + n + '</text>';
+                    const sh = (H - NUMB) / 3;
+                    for (let k = 0; k < 3; k++) {
+                        const sy = y + NUMB + k * sh;
+                        s += '<rect x="' + (x + 1) + '" y="' + sy + '" width="' + (W - 2) + '" height="' + sh + '" fill="' + (on ? SECT_ON[k] : SECT_FILL[k]) + '"/>';
+                        s += '<text x="' + (x + W / 2) + '" y="' + (sy + sh / 2 + 3) + '" text-anchor="middle" font-size="7" fill="' + (on ? '#4a7a4a' : '#aaa') + '">' + SECT[k] + '</text>';
+                    }
+                    if (listCount[n]) {                                     // badge pezzi in lista
+                        s += '<circle cx="' + (x + W - 4) + '" cy="' + (y + 4) + '" r="9" fill="#FF6F00"/>';
+                        s += '<text x="' + (x + W - 4) + '" y="' + (y + 7.5) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">' + listCount[n] + '</text>';
+                    }
+                });
+            });
+
+            // percorso a serpentina: dall'ingresso (SE), colonna Est in su, poi giù, ecc.
+            let pts = '';
+            const entX = totalW - padX + 10, arrows = [];
+            pts += (entX) + ',' + ySouth + ' ';
+            for (let c = 0; c < numCols; c++) {
+                const up = c % 2 === 0;
+                pts += xc(c) + ',' + (up ? ySouth : yNorth) + ' ' + xc(c) + ',' + (up ? yNorth : ySouth) + ' ';
+                arrows.push({ x: xc(c), y: padTop + gridH / 2, up });
+            }
+            s += '<polyline points="' + pts.trim() + '" fill="none" stroke="#FF6F00" stroke-width="2.5" stroke-dasharray="7 5" stroke-linejoin="round" opacity=".85"/>';
+            arrows.forEach(a => {                                           // freccia di direzione a metà corsa
+                s += a.up
+                    ? '<polygon points="' + (a.x - 5) + ',' + (a.y + 4) + ' ' + (a.x + 5) + ',' + (a.y + 4) + ' ' + a.x + ',' + (a.y - 6) + '" fill="#FF6F00"/>'
+                    : '<polygon points="' + (a.x - 5) + ',' + (a.y - 4) + ' ' + (a.x + 5) + ',' + (a.y - 4) + ' ' + a.x + ',' + (a.y + 6) + '" fill="#FF6F00"/>';
+            });
+            // ingresso e traguardo
+            s += '<text x="' + (totalW - padX + 10) + '" y="' + (ySouth + 16) + '" text-anchor="middle" font-size="13">🚪</text>';
+            const lastUp = (numCols - 1) % 2 === 0;
+            s += '<text x="' + xc(numCols - 1) + '" y="' + (lastUp ? yNorth - 4 : ySouth + 16) + '" text-anchor="middle" font-size="13">🏁</text>';
+            s += '</svg>';
+
+            let h = '<div class="stcard"><h3>🗺️ Mappa del negozio</h3>'
+                + '<div class="sug-sub">Vista dall\'alto: percorso di spesa a serpentina dall\'ingresso (🚪, Sud-Est) al traguardo (🏁).</div>'
+                + s
+                + '<div class="amap-legend">'
+                + '🟢 corsia con prodotti · grigia = senza prodotti · <span style="color:var(--o);font-weight:700">⬤</span> pezzi della Lista in quella corsia.<br>'
+                + 'Ogni corsia: Inizio a Sud, Fine a Nord. Banco frigo, pesce e "senza corsia" restano in fondo alla Lista.<br>'
+                + 'La disposizione si modifica da ⚙️ Impostazioni → Anteprima / modifica disposizione corsie.'
+                + '</div></div>';
+            el.innerHTML = h;
+        }
+
         // Migrazione massiva: sposta tutti i prodotti da una corsia a un'altra
         function migrateAisle() {
             const norm = s => (s || '').trim().toUpperCase().replace(/[^0-9A-Z]/g, '');
@@ -3608,6 +3733,7 @@
             updateConnectionBadge();
             applyAdvFeatures();
             applySuggestTab();
+            applyMapTab();
             applyThresholds();
             loadAisleLayout();
 
